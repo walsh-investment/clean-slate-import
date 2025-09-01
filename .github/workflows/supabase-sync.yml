@@ -1,0 +1,21 @@
+name: Supabase Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 16 * * 1"   # Mondays 09:00 PT (UTC cron)
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    uses: walsh-investment/.github/.github/workflows/supabase.yml@main
+    with:
+      project_ref: wkhxircgcysdzmofwnbr            # per repo
+      schemas: "*"                          # auto-discover all non-system schemas
+      output_path: src/types/database.ts
+    secrets:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      DB_URL: ${{ secrets.DB_URL }}         # add this repo secret
