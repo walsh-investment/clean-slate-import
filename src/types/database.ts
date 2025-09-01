@@ -1,12 +1,15 @@
-// Database types matching the Supabase schema
+// Database types matching the actual NilesDB app schema
+export type PersonKind = 'parent' | 'grandparent' | 'child' | 'other';
+export type TaskStatus = 'todo' | 'in_progress' | 'done';
+
 export interface Person {
   id: string;
   household_id: string;
-  name: string;
-  role?: string;
-  color?: string;
-  avatar?: string;
-  birth_date?: string;
+  display_name: string;
+  kind: PersonKind;
+  user_id?: string;
+  color_hex: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -14,9 +17,7 @@ export interface Person {
 export interface Household {
   id: string;
   name: string;
-  created_by: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface HouseholdMember {
@@ -33,13 +34,15 @@ export interface Event {
   household_id: string;
   person_id: string;
   title: string;
-  description?: string;
   event_date: string;
   start_time?: string;
   end_time?: string;
   location?: string;
   driver_person_id?: string;
-  source: 'email' | 'manual';
+  ride_needed?: boolean;
+  source: string;
+  notes?: string;
+  created_by?: string;
   created_at: string;
   updated_at: string;
 }
@@ -47,13 +50,11 @@ export interface Event {
 export interface Task {
   id: string;
   household_id: string;
-  assigned_to_person_id: string;
+  person_id: string;
   title: string;
-  description?: string;
+  status: TaskStatus;
   due_date?: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'todo' | 'in-progress' | 'done';
-  category?: string;
+  created_by?: string;
   created_at: string;
   updated_at: string;
 }
@@ -99,6 +100,29 @@ export interface RideOffer {
   updated_at: string;
 }
 
+export interface CalendarShare {
+  id: string;
+  household_id: string;
+  name: string;
+  person_ids: string[];
+  shared_with: string[];
+  token: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Notification {
+  id: string;
+  household_id: string;
+  person_id: string;
+  type: string;
+  title: string;
+  content?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 // Legacy types for compatibility - will be phased out
 export type MemberId = string;
 export type MemberIdOrAll = MemberId | 'all';
@@ -115,4 +139,3 @@ export interface AppState {
 // Component variant types
 export type EventVariant = 'assigned' | 'ride-needed' | 'overdue';
 export type EventDensity = 'compact' | 'regular';
-export type TaskStatus = 'todo' | 'in-progress' | 'done';

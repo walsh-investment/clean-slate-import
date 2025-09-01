@@ -8,7 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { HouseholdProvider } from '@/contexts/HouseholdContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { ModalProvider } from '../src/stores/modalProvider';
-import { dataClient } from '../src/services/dataAdapter';
+import { dataClient } from '../src/services/supabaseDataClient';
 
 // Import all screen components
 import { AllFamilyFeed } from '../components/screens/AllFamilyFeed';
