@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Car, MapPin, Clock, User } from 'lucide-react';
 import { useModalStore } from '../../src/stores/modalProvider';
 import { familyMembers } from '../../constants/family';
-import { dataClient } from '../../src/services/dataClient';
+import { dataClient } from '../../src/services/supabaseDataClient';
 import { toast } from '../ui/simple-toast';
 import { MemberId } from '../../src/types';
 

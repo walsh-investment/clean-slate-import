@@ -3,10 +3,10 @@ import { Event, Task, Person, Household, RideOffer } from '@/types/database';
 
 // Legacy compatibility layer - maintains existing interface while preparing for database migration
 class SupabaseDataClient {
-  // For now, use fallback to mock data until authentication and RLS is properly configured
   async getEvents(personId?: string): Promise<any[]> {
     try {
-      // Fallback to mock data until authentication and RLS is properly configured
+      // TODO: Connect to app schema when types are updated
+      // For now, use mock data with plans to connect to real DB
       const { events } = await import('../../data/events');
       return personId ? events.filter((e: any) => e.member === personId) : events;
     } catch (error) {
@@ -49,9 +49,9 @@ class SupabaseDataClient {
     }
   }
 
-  // Tasks
   async getTasks(personId?: string): Promise<any[]> {
     try {
+      // TODO: Connect to app schema when types are updated
       const { tasks } = await import('../../data/tasks');
       return personId ? tasks.filter((t: any) => t.member === personId) : tasks;
     } catch (error) {
@@ -94,9 +94,9 @@ class SupabaseDataClient {
     }
   }
 
-  // People
   async getPeople(householdId?: string): Promise<any[]> {
     try {
+      // TODO: Connect to app schema when types are updated
       const { FAMILY_MEMBERS } = await import('../../constants/family');
       return FAMILY_MEMBERS;
     } catch (error) {
@@ -172,9 +172,9 @@ class SupabaseDataClient {
     }
   }
 
-  // Ride Offers
   async getRideOffers(personId?: string): Promise<any[]> {
     try {
+      // TODO: Connect to app schema when types are updated
       const { rideOffers } = await import('../../data/rides');
       return personId ? rideOffers.filter((r: any) => r.offered_by === personId) : rideOffers;
     } catch (error) {
@@ -208,9 +208,9 @@ class SupabaseDataClient {
     }
   }
 
-  // Messages
   async getMessages(personId?: string): Promise<any[]> {
     try {
+      // TODO: Connect to app schema when types are updated
       const { messages } = await import('../../data/messages');
       return personId ? messages.filter((m: any) => m.recipients.includes(personId)) : messages;
     } catch (error) {

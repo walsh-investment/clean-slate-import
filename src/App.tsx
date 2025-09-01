@@ -7,6 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { HouseholdProvider } from '@/contexts/HouseholdContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { AuthForm } from '@/components/auth/AuthForm';
 import { ModalProvider } from '../src/stores/modalProvider';
 import { dataClient } from '../src/services/supabaseDataClient';
 
@@ -50,28 +51,16 @@ const FamilyOrganizerApp = () => {
         <Sidebar />
         <main className="flex-1 overflow-auto p-6">
           <Routes>
-            {/* Main Dashboard */}
-            <Route path="/" element={<AllFamilyFeed />} />
-            
-            {/* Member Overview Pages */}
-            <Route path="/member/:id" element={<MemberOverview />} />
-            
-            {/* Calendar Views */}
-            <Route path="/calendar/week" element={<CalendarWeek />} />
-            <Route path="/calendar/list" element={<CalendarList />} />
-            
-            {/* Tasks & Activities */}
-            <Route path="/tasks" element={<TasksBoard />} />
-            <Route path="/rides" element={<RideRequests />} />
-            
-            {/* Communication */}
-            <Route path="/messages" element={<MessagesReminders />} />
-            
-            {/* Settings */}
-            <Route path="/settings" element={<Settings />} />
-            
-            {/* Fallback */}
-            <Route path="*" element={<AllFamilyFeed />} />
+            <Route path="/auth" element={<AuthForm />} />
+            <Route path="/" element={<ProtectedRoute><AllFamilyFeed /></ProtectedRoute>} />
+            <Route path="/member/:id" element={<ProtectedRoute><MemberOverview /></ProtectedRoute>} />
+            <Route path="/calendar/week" element={<ProtectedRoute><CalendarWeek /></ProtectedRoute>} />
+            <Route path="/calendar/list" element={<ProtectedRoute><CalendarList /></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><TasksBoard /></ProtectedRoute>} />
+            <Route path="/rides" element={<ProtectedRoute><RideRequests /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><MessagesReminders /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="*" element={<ProtectedRoute><AllFamilyFeed /></ProtectedRoute>} />
           </Routes>
         </main>
         
@@ -89,11 +78,9 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <Router>
-          <ProtectedRoute>
-            <HouseholdProvider>
-              <FamilyOrganizerApp />
-            </HouseholdProvider>
-          </ProtectedRoute>
+          <HouseholdProvider>
+            <FamilyOrganizerApp />
+          </HouseholdProvider>
         </Router>
       </AuthProvider>
     </TooltipProvider>

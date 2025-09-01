@@ -7,7 +7,7 @@ import { EventRow } from '../EventRow';
 import { TaskCard } from '../TaskCard';
 import { familyMembers } from '../../constants/family';
 import { useAppStore } from '../../src/store';
-import { dataClient } from '../../src/services/dataClient';
+import { dataClient } from '../../src/services/supabaseDataClient';
 import { Event, Task, MemberId } from '../../src/types';
 import { isWithinDays } from '../../src/utils/dates';
 

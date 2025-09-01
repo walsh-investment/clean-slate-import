@@ -7,7 +7,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Calendar, Clock, MapPin, User, Filter, Search, Plus } from 'lucide-react';
 import { useAppStore } from '../../src/store';
-import { dataClient } from '../../src/services/dataClient';
+import { dataClient } from '../../src/services/supabaseDataClient';
 import { Event, MemberId, MemberIdOrAll } from '../../src/types';
 import { familyMembers } from '../../constants/family';
 // import { useModalStore } from '../../src/stores/modalStore';

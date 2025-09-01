@@ -7,7 +7,7 @@ import { Car, Clock, MapPin, Plus, CheckCircle, AlertCircle } from 'lucide-react
 import { RIDE_REQUESTS, AVAILABLE_DRIVERS } from '../../data/rides';
 import { getStatusColor } from '../../utils/colors';
 import { useModalStore } from '../../src/stores/modalProvider';
-import { dataClient } from '../../src/services/dataClient';
+import { dataClient } from '../../src/services/supabaseDataClient';
 
 export function RideRequests() {
   const { openModal } = useModalStore();

@@ -9,7 +9,7 @@ import { Checkbox } from '../ui/checkbox';
 import { MessageSquare, Bell, Clock, User, AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../src/stores/modalProvider';
 import { familyMembers } from '../../constants/family';
-import { dataClient } from '../../src/services/dataClient';
+import { dataClient } from '../../src/services/supabaseDataClient';
 import { toast } from '../ui/simple-toast';
 import { MemberId } from '../../src/types';
 

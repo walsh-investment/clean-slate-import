@@ -6,7 +6,7 @@ import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Filter, Calendar, CheckSquare, Car, MessageSquare } from 'lucide-react';
 import { useAppStore } from '../../src/store';
-import { dataClient } from '../../src/services/dataAdapter';
+import { dataClient } from '../../src/services/supabaseDataClient';
 import { Event, Task, Message } from '../../src/types';
 import { isToday, isWithinDays } from '../../src/utils/dates';
 

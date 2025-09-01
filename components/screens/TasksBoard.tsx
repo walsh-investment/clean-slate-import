@@ -6,7 +6,7 @@ import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Plus, MoreHorizontal, Clock, User, CheckSquare } from 'lucide-react';
 import { useAppStore } from '../../src/store';
-import { dataClient } from '../../src/services/dataAdapter';
+import { dataClient } from '../../src/services/supabaseDataClient';
 import { Task, MemberId, MemberIdOrAll } from '../../src/types';
 import { familyMembers } from '../../constants/family';
 import { useModalStore } from '../../src/stores/modalProvider';
