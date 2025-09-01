@@ -1,0 +1,40 @@
+name: Sync Supabase Types & Edge Functions from Backend
+
+on:
+  repository_dispatch:
+    types: [sync-from-backend]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Frontend Repo
+        uses: actions/checkout@v3
+
+      - name: Checkout Backend Repo (NilesDB)
+        uses: actions/checkout@v3
+        with:
+          repository: walsh-investment/NilesDB
+          token: ${{ secrets.BACKEND_SYNC_TOKEN }}
+          path: backend
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: Generate TypeScript types
+        run: |
+          supabase gen types typescript --project-id ${{ secrets.SUPABASE_PROJECT_ID }} --schema public > src/types/database.ts
+
+      - name: Sync Edge Functions
+        run: |
+          rsync -a --delete backend/supabase/functions/ supabase/functions/
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/types/database.ts supabase/functions/
+          git diff --cached --quiet || git commit -m "chore: sync types and edge functions from backend"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
