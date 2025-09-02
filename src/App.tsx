@@ -21,6 +21,7 @@ import { RideRequests } from '../components/screens/RideRequests';
 import { MessagesReminders } from '../components/screens/MessagesReminders';
 
 import { Settings } from '../components/screens/Settings';
+import { AdminPrompts } from '../components/screens/AdminPrompts';
 
 // Import layout components
 import { Sidebar } from '../components/Sidebar';
@@ -65,6 +66,7 @@ const FamilyOrganizerApp = () => {
             <Route path="/messages" element={<ProtectedRoute><MessagesReminders /></ProtectedRoute>} />
             
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/admin-prompts" element={<ProtectedRoute><AdminPrompts /></ProtectedRoute>} />
             <Route path="*" element={<ProtectedRoute><AllFamilyFeed /></ProtectedRoute>} />
           </Routes>
           </main>

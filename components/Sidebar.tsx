@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, CheckSquare, Car, MessageSquare, Settings, Users, Clock, List, LogOut, Bot } from 'lucide-react';
+import { Calendar, CheckSquare, Car, MessageSquare, Settings, Users, Clock, List, LogOut, Bot, Shield } from 'lucide-react';
 import { familyMembers } from '../constants/family';
 import { useAppStore } from '../src/store';
 import { useAuth } from '../src/contexts/AuthContext';
@@ -53,6 +53,12 @@ export const Sidebar: React.FC = () => {
       label: 'Settings', 
       icon: Settings, 
       path: '/settings' 
+    },
+    { 
+      id: 'admin-prompts', 
+      label: 'Admin Prompts', 
+      icon: Shield, 
+      path: '/admin-prompts' 
     }
   ];
 
