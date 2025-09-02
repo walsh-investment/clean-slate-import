@@ -49,12 +49,6 @@ export const Sidebar: React.FC = () => {
       path: '/messages' 
     },
     { 
-      id: 'ai-chat', 
-      label: 'AI Assistant', 
-      icon: Bot, 
-      path: '/ai-chat' 
-    },
-    { 
       id: 'settings', 
       label: 'Settings', 
       icon: Settings, 

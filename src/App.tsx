@@ -19,11 +19,12 @@ import { CalendarList } from '../components/screens/CalendarList';
 import { TasksBoard } from '../components/screens/TasksBoard';
 import { RideRequests } from '../components/screens/RideRequests';
 import { MessagesReminders } from '../components/screens/MessagesReminders';
-import { AiChat } from '../src/components/screens/AiChat';
+
 import { Settings } from '../components/screens/Settings';
 
 // Import layout components
 import { Sidebar } from '../components/Sidebar';
+import { PersistentChat } from '../src/components/chat/PersistentChat';
 
 // Import ModalRenderer directly to avoid potential index export issues
 import { ModalRenderer } from '../components/modals/index';
@@ -50,7 +51,9 @@ const FamilyOrganizerApp = () => {
     <ModalProvider>
       <div className="w-[1440px] h-[1024px] mx-auto bg-background flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-auto p-6">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <PersistentChat />
+          <main className="flex-1 overflow-auto p-6">
           <Routes>
             <Route path="/auth" element={<AuthForm />} />
             <Route path="/" element={<ProtectedRoute><AllFamilyFeed /></ProtectedRoute>} />
@@ -60,11 +63,12 @@ const FamilyOrganizerApp = () => {
             <Route path="/tasks" element={<ProtectedRoute><TasksBoard /></ProtectedRoute>} />
             <Route path="/rides" element={<ProtectedRoute><RideRequests /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><MessagesReminders /></ProtectedRoute>} />
-            <Route path="/ai-chat" element={<ProtectedRoute><AiChat /></ProtectedRoute>} />
+            
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<ProtectedRoute><AllFamilyFeed /></ProtectedRoute>} />
           </Routes>
-        </main>
+          </main>
+        </div>
         
         {/* Global Modal Renderer */}
         <ModalRenderer />
