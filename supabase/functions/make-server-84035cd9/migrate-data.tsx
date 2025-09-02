@@ -1,9 +1,7 @@
-import * as kv from './kv_store.tsx'
-
+import * as kv from './kv_store.tsx';
 // Migration helper to populate Niles database with Walsh family sample data
 export async function migrateWalshFamilyData() {
   console.log('Starting Walsh family data migration...');
-  
   // Sample events from the Walsh family calendar
   const sampleEvents = [
     {
@@ -20,7 +18,7 @@ export async function migrateWalshFamilyData() {
       updatedAt: new Date().toISOString()
     },
     {
-      id: 'event_2', 
+      id: 'event_2',
       title: 'Tennis Tournament - Ellis',
       date: '2025-08-16',
       time: '14:00',
@@ -59,7 +57,6 @@ export async function migrateWalshFamilyData() {
       updatedAt: new Date().toISOString()
     }
   ];
-
   // Sample tasks
   const sampleTasks = [
     {
@@ -99,7 +96,6 @@ export async function migrateWalshFamilyData() {
       updatedAt: new Date().toISOString()
     }
   ];
-
   // Sample ride requests
   const sampleRides = [
     {
@@ -127,7 +123,6 @@ export async function migrateWalshFamilyData() {
       updatedAt: new Date().toISOString()
     }
   ];
-
   // Sample messages
   const sampleMessages = [
     {
@@ -155,41 +150,41 @@ export async function migrateWalshFamilyData() {
       updatedAt: new Date().toISOString()
     }
   ];
-
   try {
     // Migrate events
-    for (const event of sampleEvents) {
+    for (const event of sampleEvents){
       const key = `events:${event.member}:${event.id}`;
       await kv.set(key, event);
       console.log(`Migrated event: ${event.title}`);
     }
-
     // Migrate tasks
-    for (const task of sampleTasks) {
+    for (const task of sampleTasks){
       const key = `tasks:${task.assignedTo}:${task.id}`;
       await kv.set(key, task);
       console.log(`Migrated task: ${task.title}`);
     }
-
     // Migrate rides
-    for (const ride of sampleRides) {
+    for (const ride of sampleRides){
       const key = `rides:${ride.requestedBy}:${ride.id}`;
       await kv.set(key, ride);
       console.log(`Migrated ride: ${ride.title}`);
     }
-
     // Migrate messages
-    for (const message of sampleMessages) {
+    for (const message of sampleMessages){
       const key = `messages:${message.recipient}:${message.id}`;
       await kv.set(key, message);
       console.log(`Migrated message: ${message.title}`);
     }
-
     console.log('Walsh family data migration completed successfully!');
-    return { success: true, message: 'Migration completed' };
-    
+    return {
+      success: true,
+      message: 'Migration completed'
+    };
   } catch (error) {
     console.error('Migration failed:', error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
