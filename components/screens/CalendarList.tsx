@@ -80,7 +80,7 @@ export function CalendarList() {
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (event.location?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    const matchesMember = filterMember === 'all' || event.member === filterMember;
+    const matchesMember = filterMember === 'all' || event.person_id === filterMember;
     
     // Date filtering
     let matchesDate = true;
@@ -236,15 +236,15 @@ export function CalendarList() {
                   <div className="flex items-center space-x-4">
                     <div 
                       className="w-4 h-4 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getMemberColor(event.member) }}
-                      aria-label={`${getMemberName(event.member)}'s event`}
+                      style={{ backgroundColor: getMemberColor(event.person_id) }}
+                      aria-label={`${getMemberName(event.person_id)}'s event`}
                     />
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <h4>{event.title}</h4>
-                        {event.driver_name && (
+                        {event.driver_person_id && (
                           <Badge variant="outline" className="text-xs">
-                            Driver: {getMemberName(event.driver_name)}
+                            Driver: {getMemberName(event.driver_person_id)}
                           </Badge>
                         )}
                         {event.source === 'email' && (
@@ -256,7 +256,7 @@ export function CalendarList() {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <User className="w-3 h-3 mr-1" />
-                          {getMemberName(event.member)}
+                          {getMemberName(event.person_id)}
                         </span>
                         <span className="flex items-center">
                           <Calendar className="w-3 h-3 mr-1" />

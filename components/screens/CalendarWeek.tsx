@@ -41,7 +41,7 @@ export function CalendarWeek() {
       // Filter events for current week and member if individual view
       const filteredEvents = (allEvents || []).filter(event => {
         if (isIndividualView) {
-          return event.member === (currentMemberId as MemberId);
+          return event.person_id === (currentMemberId as MemberId);
         }
         return true;
       });
@@ -193,14 +193,14 @@ export function CalendarWeek() {
                           key={event.id}
                           className="absolute inset-x-1 rounded text-white text-xs p-1 cursor-pointer hover:opacity-80"
                           style={{
-                            backgroundColor: getMemberColor(event.member),
+                            backgroundColor: getMemberColor(event.person_id),
                             height: `${getEventDuration(event.start_time, event.end_time) * 60 - 4}px`,
                             zIndex: 10,
                           }}
-                          title={`${event.title} - ${getMemberName(event.member)} - ${formatTime(event.start_time)}`}
+                          title={`${event.title} - ${getMemberName(event.person_id)} - ${formatTime(event.start_time)}`}
                         >
                           <div className="font-medium truncate">{event.title}</div>
-                          <div className="opacity-90 truncate">{getMemberName(event.member)}</div>
+                          <div className="opacity-90 truncate">{getMemberName(event.person_id)}</div>
                           {event.location && (
                             <div className="opacity-80 truncate text-[10px]">{event.location}</div>
                           )}

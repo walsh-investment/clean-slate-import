@@ -21,10 +21,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   compact = false 
 }) => {
   const [showChecklist, setShowChecklist] = useState(false);
-  const member = familyMembers.find(m => m.id === task.member);
-  const hasChecklist = task.checklist && task.checklist.length > 0;
-  const completedItems = task.checklist?.filter(item => item.done).length || 0;
-  const totalItems = task.checklist?.length || 0;
+  const member = familyMembers.find(m => m.id === task.person_id);
+  const hasChecklist = false; // Checklist functionality will be implemented separately
+  const completedItems = 0;
+  const totalItems = 0;
   const isTaskOverdue = task.due_date && isOverdue(task.due_date);
 
   const getStatusBadge = () => {
@@ -39,7 +39,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             To Do
           </Badge>
         );
-      case 'in-progress':
+      case 'in_progress':
         return (
           <Badge 
             variant="secondary" 
@@ -87,7 +87,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div 
             className="w-3 h-3 rounded-full flex-shrink-0"
-            style={{ backgroundColor: `var(--member-${task.member})` }}
+            style={{ backgroundColor: `var(--member-${task.person_id})` }}
             aria-label={`${member?.name || 'Unknown member'}'s task`}
           />
           
@@ -147,27 +147,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
       )}
 
-      {/* Checklist Items */}
+      {/* Checklist Items - Coming Soon */}
       {hasChecklist && showChecklist && (
         <div className="space-y-2 pt-2 border-t border-border">
-          {task.checklist!.map((item) => (
-            <div key={item.id} className="flex items-center gap-2">
-              <Checkbox
-                id={`checklist-${task.id}-${item.id}`}
-                checked={item.done}
-                onCheckedChange={() => handleChecklistItemToggle(item.id)}
-                className="focus:ring-2 focus:ring-primary"
-                aria-describedby={`checklist-${task.id}-${item.id}-label`}
-              />
-              <label
-                id={`checklist-${task.id}-${item.id}-label`}
-                htmlFor={`checklist-${task.id}-${item.id}`}
-                className={`text-xs flex-1 cursor-pointer ${item.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}
-              >
-                {item.text}
-              </label>
-            </div>
-          ))}
+          <p className="text-xs text-muted-foreground">Checklist functionality coming soon</p>
         </div>
       )}
 
@@ -178,7 +161,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusChange('in-progress')}
+              onClick={() => handleStatusChange('in_progress')}
               className="text-xs focus:ring-2 focus:ring-primary"
               aria-label={`Start working on "${task.title}"`}
             >
@@ -186,7 +169,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             </Button>
           )}
           
-          {task.status === 'in-progress' && (
+          {task.status === 'in_progress' && (
             <>
               <Button
                 size="sm"

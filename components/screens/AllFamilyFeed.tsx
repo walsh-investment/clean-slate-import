@@ -38,8 +38,8 @@ export function AllFamilyFeed() {
 
       // Filter by member
       if (selectedMember !== 'all') {
-        filteredEvents = filteredEvents.filter(event => event.member === selectedMember);
-        filteredTasks = filteredTasks.filter(task => task.member === selectedMember);
+        filteredEvents = filteredEvents.filter(event => event.person_id === selectedMember);
+        filteredTasks = filteredTasks.filter(task => task.person_id === selectedMember);
       }
 
       // Filter by time
@@ -74,7 +74,7 @@ export function AllFamilyFeed() {
 
   const todayEvents = events.filter(event => isToday(event.event_date));
   const activeTasks = tasks.filter(task => task.status !== 'done');
-  const rideRequests = events.filter(event => !event.driver_name);
+  const rideRequests = events.filter(event => !event.driver_person_id);
 
   if (loading) {
     return (

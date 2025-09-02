@@ -11,10 +11,10 @@ import { Task, MemberId, MemberIdOrAll } from '../../src/types';
 import { familyMembers } from '../../constants/family';
 import { useModalStore } from '../../src/stores/modalProvider';
 
-const TASK_STATUSES = ['todo', 'in-progress', 'done'] as const;
+const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
 const STATUS_LABELS = {
   'todo': 'To Do',
-  'in-progress': 'In Progress', 
+  'in_progress': 'In Progress', 
   'done': 'Done'
 } as const;
 
@@ -41,7 +41,7 @@ export function TasksBoard() {
       // Filter tasks for current member if individual view
       const filteredTasks = (allTasks || []).filter(task => {
         if (isIndividualView) {
-          return task.member === (currentMemberId as MemberId);
+          return task.person_id === (currentMemberId as MemberId);
         }
         return true;
       });
@@ -55,7 +55,7 @@ export function TasksBoard() {
     }
   };
 
-  const handleTaskStatusChange = async (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => {
+  const handleTaskStatusChange = async (taskId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
     try {
       await dataClient.updateTask(taskId, { status: newStatus });
       
@@ -72,7 +72,7 @@ export function TasksBoard() {
     openModal('editTask', task);
   };
 
-  const handleAddTask = (status?: 'todo' | 'in-progress' | 'done') => {
+  const handleAddTask = (status?: 'todo' | 'in_progress' | 'done') => {
     const defaultMember: MemberId = isIndividualView 
       ? (currentMemberId as MemberId) 
       : 'charlie';
@@ -221,11 +221,10 @@ export function TasksBoard() {
                               </Button>
                             </div>
                             
-                            {task.checklist && task.checklist.length > 0 && (
-                              <div className="text-xs text-muted-foreground">
-                                {task.checklist.filter(item => item.done).length}/{task.checklist.length} completed
-                              </div>
-                            )}
+                            {/* Progress tracking coming later */}
+                            <div className="text-xs text-muted-foreground">
+                              Task progress tracking coming soon
+                            </div>
                             
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1 text-xs text-muted-foreground">
@@ -237,10 +236,10 @@ export function TasksBoard() {
                                 <div className="flex items-center space-x-1">
                                   <Avatar 
                                     className="w-5 h-5" 
-                                    style={{ backgroundColor: getMemberColor(task.member) }}
+                                    style={{ backgroundColor: getMemberColor(task.person_id) }}
                                   >
                                     <AvatarFallback className="text-white text-xs">
-                                      {getMemberInitials(task.member)}
+                                      {getMemberInitials(task.person_id)}
                                     </AvatarFallback>
                                   </Avatar>
                                 </div>

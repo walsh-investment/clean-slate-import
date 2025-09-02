@@ -15,6 +15,10 @@ export type {
   PersonKind
 } from './types/database';
 
+// Legacy types for backward compatibility
+export type MemberId = string;
+export type MemberIdOrAll = MemberId | 'all';
+
 // Application view and filter types
 export type ViewType = 'all-family' | 'member-overview' | 'calendar-week' | 'calendar-list' | 'tasks-board' | 'ride-requests' | 'messages' | 'settings' | 'ai-chat';
 export type TimeFilter = 'today' | 'next7';

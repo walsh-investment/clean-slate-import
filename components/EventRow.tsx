@@ -24,12 +24,12 @@ export const EventRow: React.FC<EventRowProps> = ({
   // Compute variant from event data if not explicitly provided
   const computedVariant: EventVariant = variant || (() => {
     if (isOverdue(event.event_date)) return 'overdue';
-    if (!event.driver_name) return 'ride-needed';
+    if (!event.driver_person_id) return 'ride-needed';
     return 'assigned';
   })();
 
-  const member = familyMembers.find(m => m.id === event.member);
-  const driver = event.driver_name ? familyMembers.find(m => m.id === event.driver_name) : null;
+  const member = familyMembers.find(m => m.id === event.person_id);
+  const driver = event.driver_person_id ? familyMembers.find(m => m.id === event.driver_person_id) : null;
   
   const isCompact = density === 'compact';
   const rowPadding = isCompact ? 'p-3' : 'p-4';
@@ -85,7 +85,7 @@ export const EventRow: React.FC<EventRowProps> = ({
         {/* Member color chip */}
         <div 
           className="w-3 h-3 rounded-full flex-shrink-0"
-          style={{ backgroundColor: `var(--member-${event.member})` }}
+          style={{ backgroundColor: `var(--member-${event.person_id})` }}
           aria-label={`${member?.name || 'Unknown member'}'s event`}
         />
         

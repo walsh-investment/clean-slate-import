@@ -8,7 +8,7 @@ import { TaskCard } from '../TaskCard';
 import { familyMembers } from '../../constants/family';
 import { useAppStore } from '../../src/store';
 import { dataClient } from '../../src/services/supabaseDataClient';
-import { Event, Task, MemberId } from '../../src/types';
+import { Event, Task, TaskStatus, MemberId } from '../../src/types';
 import { isWithinDays } from '../../src/utils/dates';
 
 export const MemberOverview: React.FC = () => {
@@ -40,16 +40,16 @@ export const MemberOverview: React.FC = () => {
 
       // Filter for member's upcoming events (next 14 days)
       const memberEvents = (Array.isArray(allEvents) ? allEvents : [])
-        .filter(event => event.member === memberId)
+        .filter(event => event.person_id === memberId)
         .filter(event => isWithinDays(event.event_date, 14))
         .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
 
       // Filter for member's active tasks
       const memberTasks = (Array.isArray(allTasks) ? allTasks : [])
-        .filter(task => task.member === memberId)
+        .filter(task => task.person_id === memberId)
         .sort((a, b) => {
-          // Sort by status (todo, in-progress, done) then by due date
-          const statusOrder = { 'todo': 0, 'in-progress': 1, 'done': 2 };
+          // Sort by status (todo, in_progress, done) then by due date
+          const statusOrder = { 'todo': 0, 'in_progress': 1, 'done': 2 };
           if (statusOrder[a.status] !== statusOrder[b.status]) {
             return statusOrder[a.status] - statusOrder[b.status];
           }
@@ -71,7 +71,7 @@ export const MemberOverview: React.FC = () => {
     }
   };
 
-  const handleTaskStatusChange = async (taskId: string, status: 'todo' | 'in-progress' | 'done') => {
+  const handleTaskStatusChange = async (taskId: string, status: TaskStatus) => {
     try {
       // TODO: This will be replaced with Supabase update
       await dataClient.updateTask(taskId, { status });
@@ -87,20 +87,8 @@ export const MemberOverview: React.FC = () => {
 
   const handleChecklistToggle = async (taskId: string, itemId: string) => {
     try {
-      const task = tasks.find(t => t.id === taskId);
-      if (!task?.checklist) return;
-
-      const updatedChecklist = task.checklist.map(item =>
-        item.id === itemId ? { ...item, done: !item.done } : item
-      );
-
-      // TODO: This will be replaced with Supabase update
-      await dataClient.updateTask(taskId, { checklist: updatedChecklist });
-      
-      // Optimistic update
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, checklist: updatedChecklist } : t
-      ));
+      // Checklist functionality will be implemented later
+      console.log('Checklist toggle:', taskId, itemId);
     } catch (error) {
       console.error('Failed to update checklist item:', error);
     }
@@ -217,7 +205,7 @@ export const MemberOverview: React.FC = () => {
                     key={task.id}
                     task={task}
                     compact={true}
-                    onStatusChange={handleTaskStatusChange}
+                  onStatusChange={handleTaskStatusChange}
                     onChecklistToggle={handleChecklistToggle}
                   />
                 ))}
