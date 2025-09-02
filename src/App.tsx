@@ -31,15 +31,15 @@ import { ModalRenderer } from '../components/modals/index';
 const queryClient = new QueryClient();
 
 const FamilyOrganizerApp = () => {
-  // Initialize Supabase connection and setup data on app start
+  // Initialize Supabase connection on app start
   useEffect(() => {
     const initializeNiles = async () => {
       try {
-        console.log('Initializing Niles family organizer with Supabase backend...');
+        console.log('Initializing Niles family organizer...');
         await dataClient.initializeData();
         console.log('Niles initialization complete');
       } catch (error) {
-        console.warn('Niles initialization failed, falling back to mock data:', error);
+        console.error('Niles initialization failed:', error);
       }
     };
 
