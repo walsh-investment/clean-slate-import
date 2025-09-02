@@ -4,9 +4,20 @@ import { Event, Task, Person, Household, RideOffer } from '@/types/database';
 class SupabaseDataClient {
   async getEvents(personId?: string): Promise<any[]> {
     try {
-      // Using mock data until Supabase sync completes
-      const { events } = await import('../../data/events');
-      return personId ? events.filter((e: any) => e.member === personId) : events;
+      let query = 'SELECT * FROM app.events';
+      
+      if (personId) {
+        query += ` WHERE person_id = '${personId}'`;
+      }
+      
+      query += ' ORDER BY event_date ASC';
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to fetch events:', error);
       return [];
@@ -15,13 +26,19 @@ class SupabaseDataClient {
 
   async createEvent(event: any): Promise<any> {
     try {
-      console.log('Creating event (mock):', event);
-      const newEvent = {
-        id: crypto.randomUUID(),
-        ...event,
-        event_date: event.event_date || new Date().toISOString().split('T')[0],
-      };
-      return newEvent;
+      const query = `
+        INSERT INTO app.events (household_id, person_id, title, event_date, start_time, end_time, location, notes, source, created_by) 
+        VALUES ('${event.household_id || ''}', '${event.person_id || ''}', '${event.title}', '${event.event_date || new Date().toISOString().split('T')[0]}', 
+                '${event.start_time || ''}', '${event.end_time || ''}', '${event.location || ''}', '${event.notes || ''}', 
+                '${event.source || 'manual'}', '${event.created_by || ''}') 
+        RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to create event:', error);
       throw error;
@@ -30,8 +47,18 @@ class SupabaseDataClient {
 
   async updateEvent(id: string, updates: any): Promise<any> {
     try {
-      console.log('Updating event (mock):', id, updates);
-      return { id, ...updates };
+      const setClause = Object.keys(updates)
+        .map(key => `${key} = '${updates[key]}'`)
+        .join(', ');
+      
+      const query = `UPDATE app.events SET ${setClause} WHERE id = '${id}' RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to update event:', error);
       throw error;
@@ -40,7 +67,11 @@ class SupabaseDataClient {
 
   async deleteEvent(id: string): Promise<void> {
     try {
-      console.log('Deleting event (mock):', id);
+      const { error } = await supabase.rpc('exec_sql', {
+        query_text: `DELETE FROM app.events WHERE id = '${id}'`
+      });
+      
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to delete event:', error);
       throw error;
@@ -49,9 +80,20 @@ class SupabaseDataClient {
 
   async getTasks(personId?: string): Promise<any[]> {
     try {
-      // TODO: Connect to app schema when types are updated
-      const { tasks } = await import('../../data/tasks');
-      return personId ? tasks.filter((t: any) => t.member === personId) : tasks;
+      let query = 'SELECT * FROM app.tasks';
+      
+      if (personId) {
+        query += ` WHERE person_id = '${personId}'`;
+      }
+      
+      query += ' ORDER BY created_at DESC';
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
       return [];
@@ -60,13 +102,18 @@ class SupabaseDataClient {
 
   async createTask(task: any): Promise<any> {
     try {
-      console.log('Creating task (mock):', task);
-      const newTask = {
-        id: crypto.randomUUID(),
-        ...task,
-        status: task.status || 'todo',
-      };
-      return newTask;
+      const query = `
+        INSERT INTO app.tasks (household_id, person_id, title, status, due_date, created_by) 
+        VALUES ('${task.household_id || ''}', '${task.person_id || ''}', '${task.title}', '${task.status || 'todo'}', 
+                '${task.due_date || ''}', '${task.created_by || ''}') 
+        RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to create task:', error);
       throw error;
@@ -75,8 +122,18 @@ class SupabaseDataClient {
 
   async updateTask(id: string, updates: any): Promise<any> {
     try {
-      console.log('Updating task (mock):', id, updates);
-      return { id, ...updates };
+      const setClause = Object.keys(updates)
+        .map(key => `${key} = '${updates[key]}'`)
+        .join(', ');
+      
+      const query = `UPDATE app.tasks SET ${setClause} WHERE id = '${id}' RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to update task:', error);
       throw error;
@@ -85,7 +142,11 @@ class SupabaseDataClient {
 
   async deleteTask(id: string): Promise<void> {
     try {
-      console.log('Deleting task (mock):', id);
+      const { error } = await supabase.rpc('exec_sql', {
+        query_text: `DELETE FROM app.tasks WHERE id = '${id}'`
+      });
+      
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to delete task:', error);
       throw error;
@@ -94,9 +155,20 @@ class SupabaseDataClient {
 
   async getPeople(householdId?: string): Promise<any[]> {
     try {
-      // TODO: Connect to app schema when types are updated
-      const { FAMILY_MEMBERS } = await import('../../constants/family');
-      return FAMILY_MEMBERS;
+      let query = 'SELECT * FROM app.people WHERE is_active = true';
+      
+      if (householdId) {
+        query += ` AND household_id = '${householdId}'`;
+      }
+      
+      query += ' ORDER BY display_name ASC';
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to fetch people:', error);
       return [];
@@ -105,12 +177,18 @@ class SupabaseDataClient {
 
   async createPerson(person: any): Promise<any> {
     try {
-      console.log('Creating person (mock):', person);
-      const newPerson = {
-        id: crypto.randomUUID(),
-        ...person,
-      };
-      return newPerson;
+      const query = `
+        INSERT INTO app.people (household_id, display_name, kind, color_hex, is_active) 
+        VALUES ('${person.household_id || ''}', '${person.display_name}', '${person.kind || 'other'}', 
+                '${person.color_hex || '#3B82F6'}', ${person.is_active !== false}) 
+        RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to create person:', error);
       throw error;
@@ -120,14 +198,12 @@ class SupabaseDataClient {
   // Households
   async getHouseholds(): Promise<any[]> {
     try {
-      // Mock household data
-      return [
-        {
-          id: crypto.randomUUID(),
-          name: 'Niles Family',
-          created_at: new Date().toISOString()
-        }
-      ];
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: 'SELECT * FROM app.households ORDER BY created_at DESC'
+      });
+      
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to fetch households:', error);
       return [];
@@ -172,9 +248,20 @@ class SupabaseDataClient {
 
   async getRideOffers(personId?: string): Promise<any[]> {
     try {
-      // TODO: Connect to app schema when types are updated
-      const { rideOffers } = await import('../../data/rides');
-      return personId ? rideOffers.filter((r: any) => r.offered_by === personId) : rideOffers;
+      let query = 'SELECT * FROM app.ride_offers';
+      
+      if (personId) {
+        query += ` WHERE offered_by_person_id = '${personId}'`;
+      }
+      
+      query += ' ORDER BY created_at DESC';
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to fetch ride offers:', error);
       return [];
@@ -183,13 +270,18 @@ class SupabaseDataClient {
 
   async createRideOffer(offer: any): Promise<any> {
     try {
-      console.log('Creating ride offer (mock):', offer);
-      const newOffer = {
-        id: crypto.randomUUID(),
-        ...offer,
-        status: offer.status || 'proposed',
-      };
-      return newOffer;
+      const query = `
+        INSERT INTO app.ride_offers (household_id, event_id, offered_by_person_id, status, notes) 
+        VALUES ('${offer.household_id || ''}', '${offer.event_id || ''}', '${offer.offered_by_person_id || ''}', 
+                '${offer.status || 'proposed'}', '${offer.notes || ''}') 
+        RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to create ride offer:', error);
       throw error;
@@ -198,8 +290,18 @@ class SupabaseDataClient {
 
   async updateRideOffer(id: string, updates: any): Promise<any> {
     try {
-      console.log('Updating ride offer (mock):', id, updates);
-      return { id, ...updates };
+      const setClause = Object.keys(updates)
+        .map(key => `${key} = '${updates[key]}'`)
+        .join(', ');
+      
+      const query = `UPDATE app.ride_offers SET ${setClause} WHERE id = '${id}' RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to update ride offer:', error);
       throw error;
@@ -208,9 +310,23 @@ class SupabaseDataClient {
 
   async getMessages(personId?: string): Promise<any[]> {
     try {
-      // TODO: Connect to app schema when types are updated
-      const { messages } = await import('../../data/messages');
-      return personId ? messages.filter((m: any) => m.recipients.includes(personId)) : messages;
+      let query = `
+        SELECT m.*, mr.person_id as recipient_person_id, mr.status as recipient_status
+        FROM app.messages m
+        LEFT JOIN app.message_recipients mr ON m.id = mr.message_id`;
+      
+      if (personId) {
+        query += ` WHERE mr.person_id = '${personId}'`;
+      }
+      
+      query += ' ORDER BY m.created_at DESC';
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       return [];
@@ -219,14 +335,19 @@ class SupabaseDataClient {
 
   async createMessage(message: any): Promise<any> {
     try {
-      console.log('Creating message (mock):', message);
-      const newMessage = {
-        id: crypto.randomUUID(),
-        ...message,
-        type: message.type || 'message',
-        recipients: message.recipients || [],
-      };
-      return newMessage;
+      const query = `
+        INSERT INTO app.messages (household_id, from_person_id, title, content, type, priority, due_time) 
+        VALUES ('${message.household_id || ''}', '${message.from_person_id || ''}', '${message.title || ''}', 
+                '${message.content}', '${message.type || 'message'}', '${message.priority || 'medium'}', 
+                '${message.due_time || ''}') 
+        RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to create message:', error);
       throw error;
@@ -235,8 +356,18 @@ class SupabaseDataClient {
 
   async updateMessage(id: string, updates: any): Promise<any> {
     try {
-      console.log('Updating message (mock):', id, updates);
-      return { id, ...updates };
+      const setClause = Object.keys(updates)
+        .map(key => `${key} = '${updates[key]}'`)
+        .join(', ');
+      
+      const query = `UPDATE app.messages SET ${setClause} WHERE id = '${id}' RETURNING *`;
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query_text: query
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to update message:', error);
       throw error;
@@ -273,7 +404,7 @@ class SupabaseDataClient {
   }
 
   async initializeData(): Promise<void> {
-    console.log('Supabase data client initialized with mock data fallbacks');
+    console.log('Supabase data client initialized with real backend connection');
   }
 }
 
