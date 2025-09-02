@@ -1,14 +1,26 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Event, Task, Person, Household, RideOffer } from '@/types/database';
 
-// Legacy compatibility layer - maintains existing interface while preparing for database migration
 class SupabaseDataClient {
   async getEvents(personId?: string): Promise<any[]> {
     try {
-      // TODO: Connect to app schema when types are updated
-      // For now, use mock data with plans to connect to real DB
-      const { events } = await import('../../data/events');
-      return personId ? events.filter((e: any) => e.member === personId) : events;
+      let query = 'SELECT * FROM app.events';
+      let params: any[] = [];
+      
+      if (personId) {
+        query += ' WHERE person_id = $1';
+        params = [personId];
+      }
+      
+      query += ' ORDER BY event_date ASC';
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query,
+        params
+      });
+      
+      if (error) throw error;
+      return data || [];
     } catch (error) {
       console.error('Failed to fetch events:', error);
       return [];
@@ -17,13 +29,26 @@ class SupabaseDataClient {
 
   async createEvent(event: any): Promise<any> {
     try {
-      console.log('Creating event (mock):', event);
-      const newEvent = {
-        id: crypto.randomUUID(),
-        ...event,
-        event_date: event.event_date || new Date().toISOString().split('T')[0],
-      };
-      return newEvent;
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query: `INSERT INTO app.events (household_id, person_id, title, event_date, start_time, end_time, location, notes, source, created_by) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+                RETURNING *`,
+        params: [
+          event.household_id,
+          event.person_id,
+          event.title,
+          event.event_date || new Date().toISOString().split('T')[0],
+          event.start_time,
+          event.end_time,
+          event.location,
+          event.notes,
+          event.source || 'manual',
+          event.created_by
+        ]
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to create event:', error);
       throw error;
@@ -32,8 +57,17 @@ class SupabaseDataClient {
 
   async updateEvent(id: string, updates: any): Promise<any> {
     try {
-      console.log('Updating event (mock):', id, updates);
-      return { id, ...updates };
+      const setClause = Object.keys(updates)
+        .map((key, index) => `${key} = $${index + 2}`)
+        .join(', ');
+      
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query: `UPDATE app.events SET ${setClause} WHERE id = $1 RETURNING *`,
+        params: [id, ...Object.values(updates)]
+      });
+      
+      if (error) throw error;
+      return data?.[0];
     } catch (error) {
       console.error('Failed to update event:', error);
       throw error;
@@ -42,7 +76,12 @@ class SupabaseDataClient {
 
   async deleteEvent(id: string): Promise<void> {
     try {
-      console.log('Deleting event (mock):', id);
+      const { error } = await supabase.rpc('exec_sql', {
+        query: 'DELETE FROM app.events WHERE id = $1',
+        params: [id]
+      });
+      
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to delete event:', error);
       throw error;
