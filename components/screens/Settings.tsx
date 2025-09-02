@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Separator } from '../ui/separator';
 import { Bell, User, Shield, Palette, Calendar, MessageSquare, Car } from 'lucide-react';
+import { AiProfileSettings } from './AiProfileSettings';
 
 export function Settings() {
   return (
@@ -22,12 +23,13 @@ export function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="family">Family</TabsTrigger>
           <TabsTrigger value="privacy">Privacy</TabsTrigger>
+          <TabsTrigger value="ai-profile">AI Profile</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-4">
@@ -364,6 +366,10 @@ export function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ai-profile" className="space-y-4">
+          <AiProfileSettings />
         </TabsContent>
       </Tabs>
     </div>
