@@ -19,6 +19,7 @@ import { CalendarList } from '../components/screens/CalendarList';
 import { TasksBoard } from '../components/screens/TasksBoard';
 import { RideRequests } from '../components/screens/RideRequests';
 import { MessagesReminders } from '../components/screens/MessagesReminders';
+import { AiChat } from '../src/components/screens/AiChat';
 import { Settings } from '../components/screens/Settings';
 
 // Import layout components
@@ -59,6 +60,7 @@ const FamilyOrganizerApp = () => {
             <Route path="/tasks" element={<ProtectedRoute><TasksBoard /></ProtectedRoute>} />
             <Route path="/rides" element={<ProtectedRoute><RideRequests /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><MessagesReminders /></ProtectedRoute>} />
+            <Route path="/ai-chat" element={<ProtectedRoute><AiChat /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<ProtectedRoute><AllFamilyFeed /></ProtectedRoute>} />
           </Routes>

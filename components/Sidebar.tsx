@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, CheckSquare, Car, MessageSquare, Settings, Users, Clock, List, LogOut } from 'lucide-react';
+import { Calendar, CheckSquare, Car, MessageSquare, Settings, Users, Clock, List, LogOut, Bot } from 'lucide-react';
 import { familyMembers } from '../constants/family';
 import { useAppStore } from '../src/store';
 import { useAuth } from '../src/contexts/AuthContext';
@@ -47,6 +47,12 @@ export const Sidebar: React.FC = () => {
       label: 'Messages & Reminders', 
       icon: MessageSquare, 
       path: '/messages' 
+    },
+    { 
+      id: 'ai-chat', 
+      label: 'AI Assistant', 
+      icon: Bot, 
+      path: '/ai-chat' 
     },
     { 
       id: 'settings', 
