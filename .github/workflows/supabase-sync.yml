@@ -1,9 +1,9 @@
-name: Supabase Sync
+name: Supabase Schema Sync
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "0 16 * * 1"   # Mondays 09:00 PT (UTC cron)
+    - cron: "0 16 * * 1"   # every Monday 16:00 UTC
+  workflow_dispatch:        # allow manual trigger
 
 permissions:
   contents: write
@@ -11,11 +11,81 @@ permissions:
 
 jobs:
   sync:
-    uses: walsh-investment/.github/.github/workflows/supabase.yml@main
-    with:
-      project_ref: wkhxircgcysdzmofwnbr            # per repo
-      schemas: "*"                          # auto-discover all non-system schemas
-      output_path: src/types/database.ts
-    secrets:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      DB_URL: ${{ secrets.DB_URL }}         # add this repo secret
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # ensure full history
+
+      - name: Set up Git
+        run: |
+          set -e
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git pull origin main
+          echo "✅ Repo is up to date with main"
+
+      - name: Install Supabase CLI
+        run: |
+          set -e
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          npm install -g supabase
+          echo "✅ Supabase CLI installed"
+
+      - name: Run supabase db diff
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -e
+          echo "⚡ Running supabase db diff..."
+          supabase db diff -f auto_sync_$(date +%Y%m%d_%H%M%S) || echo "No schema changes"
+          echo "✅ DB diff complete"
+          echo "--- Migration files ---"
+          ls -l supabase/migrations || echo "No migrations dir"
+          echo "--- Git status ---"
+          git status --short || true
+
+      - name: Create Branch if Changes
+        run: |
+          set -e
+          if [ -n "$(git status --porcelain supabase/migrations)" ]; then
+            BRANCH="supabase-sync-$(date +%Y%m%d-%H%M%S)"
+            echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+            git checkout -b $BRANCH
+            git add supabase/migrations
+            git commit -m "chore: auto-sync Supabase schema"
+            echo "✅ New branch $BRANCH created with schema changes"
+          else
+            echo "ℹ️ No schema changes detected."
+            echo "SKIP_PR=true" >> $GITHUB_ENV
+          fi
+
+      - name: Push Branch
+        if: env.SKIP_PR != 'true'
+        run: |
+          set -e
+          echo "⚡ Pushing branch $BRANCH to origin"
+          git push origin $BRANCH
+
+      - name: Generate Diff Summary
+        if: env.SKIP_PR != 'true'
+        run: |
+          set -e
+          echo "## Schema Changes" > diff_summary.md
+          echo "" >> diff_summary.md
+          git diff main...$BRANCH -- supabase/migrations >> diff_summary.md
+          echo "✅ Diff summary generated"
+
+      - name: Open Pull Request
+        if: env.SKIP_PR != 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.BRANCH }}
+          base: main
+          title: "chore: auto-sync Supabase schema"
+          body-path: diff_summary.md
