@@ -28,12 +28,11 @@ jobs:
           echo "✅ Repo is up to date with main"
 
       - name: Install Supabase CLI
-        run: |
-          set -e
-          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          npm install -g supabase
-          echo "✅ Supabase CLI installed"
+          run: |
+            set -e
+            curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xz
+            sudo mv supabase /usr/local/bin/supabase
+            echo "✅ Supabase CLI installed"
 
       - name: Run supabase db diff
         env:
