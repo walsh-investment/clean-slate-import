@@ -46,14 +46,32 @@ jobs:
         run: |
           set -e
           echo "⚡ Installing Supabase CLI..."
+
+          # Get latest release asset for linux amd64
           LATEST=$(curl -s https://api.github.com/repos/supabase/cli/releases/latest \
             | grep browser_download_url \
-            | grep linux_amd64.tar.gz \
+            | grep linux_amd64 \
             | cut -d '"' -f 4)
+
           echo "Downloading: $LATEST"
-          curl -sL "$LATEST" -o supabase.tar.gz
-          ls -lh supabase.tar.gz
-          tar -xzf supabase.tar.gz
+          curl -sL "$LATEST" -o supabase_download
+
+          echo "Downloaded file type:"
+          file supabase_download || true
+
+          # Try gzip first, fall back to plain tar
+          if file supabase_download | grep -q "gzip compressed"; then
+            echo "Extracting gzip tarball..."
+            tar -xzf supabase_download
+          elif file supabase_download | grep -q "tar archive"; then
+            echo "Extracting plain tar..."
+            tar -xf supabase_download
+          else
+            echo "❌ Unexpected format, showing first 20 lines"
+            head -n 20 supabase_download
+            exit 1
+          fi
+
           chmod +x supabase
           sudo mv supabase /usr/local/bin/supabase
           supabase --version
