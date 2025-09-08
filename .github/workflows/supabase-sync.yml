@@ -40,7 +40,7 @@ jobs:
         run: |
           set -e
           echo "⚡ Syncing Edge Functions from Supabase..."
-          supabase functions pull --project-ref $SUPABASE_PROJECT_REF
+          supabase functions pull
           echo "✅ Edge Functions synced"
           ls -R supabase/functions || echo "No functions found"
 
