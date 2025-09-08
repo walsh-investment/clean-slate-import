@@ -31,10 +31,13 @@ jobs:
         run: |
           set -e
           echo "⚡ Installing Supabase CLI..."
-          curl -sL https://github.com/supabase/cli/releases/latest/download/supabase_linux_x64.tar.gz | tar -xz
+          curl -sL https://github.com/supabase/cli/releases/latest/download/supabase-linux-amd64.tar.gz -o supabase.tar.gz
+          tar -xzf supabase.tar.gz
+          chmod +x supabase
           sudo mv supabase /usr/local/bin/supabase
           supabase --version
           echo "✅ Supabase CLI installed"
+
 
       - name: Pull latest Edge Functions
         env:
