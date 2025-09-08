@@ -3,7 +3,7 @@ name: Supabase Sync (Schema + Edge Functions)
 on:
   schedule:
     - cron: "0 16 * * 1"   # every Monday 16:00 UTC
-  workflow_dispatch:        # allow manual trigger
+  workflow_dispatch:        # manual trigger
 
 permissions:
   contents: write
@@ -14,24 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Print runner info
-        run: |
-          echo "⚡ Runner Information:"
-          echo "RUNNER_OS=$RUNNER_OS"
-          uname -a
-          echo "✅ Runner info logged"
-
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Verify repo state
-        run: |
-          echo "⚡ Verifying repo state..."
-          git status
-          git log -1 --oneline || echo "⚠️ No commits found"
-          echo "✅ Repo checked out"
+          fetch-depth: 0   # ensure full history
 
       - name: Set up Git
         run: |
@@ -43,39 +29,9 @@ jobs:
           git status
 
       - name: Install Supabase CLI
-        run: |
-          set -e
-          echo "⚡ Installing Supabase CLI..."
-
-          # Get latest release asset for linux amd64
-          LATEST=$(curl -s https://api.github.com/repos/supabase/cli/releases/latest \
-            | grep browser_download_url \
-            | grep linux_amd64 \
-            | cut -d '"' -f 4)
-
-          echo "Downloading: $LATEST"
-          curl -sL "$LATEST" -o supabase_download
-
-          echo "Downloaded file type:"
-          file supabase_download || true
-
-          # Try gzip first, fall back to plain tar
-          if file supabase_download | grep -q "gzip compressed"; then
-            echo "Extracting gzip tarball..."
-            tar -xzf supabase_download
-          elif file supabase_download | grep -q "tar archive"; then
-            echo "Extracting plain tar..."
-            tar -xf supabase_download
-          else
-            echo "❌ Unexpected format, showing first 20 lines"
-            head -n 20 supabase_download
-            exit 1
-          fi
-
-          chmod +x supabase
-          sudo mv supabase /usr/local/bin/supabase
-          supabase --version
-          echo "✅ Supabase CLI installed successfully"
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest   # or pin to "v2.39.2"
 
       - name: Pull latest Edge Functions
         env:
@@ -83,11 +39,10 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -e
-          echo "⚡ Pulling Edge Functions from Supabase..."
-          supabase functions pull --project-ref $SUPABASE_PROJECT_REF || echo "⚠️ No functions to pull"
-          echo "✅ Edge Functions sync attempt complete"
-          echo "--- Current functions directory ---"
-          ls -R supabase/functions || echo "⚠️ supabase/functions directory missing"
+          echo "⚡ Syncing Edge Functions from Supabase..."
+          supabase functions pull --project-ref $SUPABASE_PROJECT_REF
+          echo "✅ Edge Functions synced"
+          ls -R supabase/functions || echo "No functions found"
 
       - name: Run supabase db diff
         env:
@@ -97,17 +52,15 @@ jobs:
           set -e
           echo "⚡ Running supabase db diff..."
           supabase db diff -f auto_sync_$(date +%Y%m%d_%H%M%S) || echo "ℹ️ No schema changes"
-          echo "✅ DB diff attempt complete"
-          echo "--- Migrations directory ---"
-          ls -l supabase/migrations || echo "⚠️ supabase/migrations directory missing"
+          echo "✅ DB diff complete"
+          echo "--- Migration files ---"
+          ls -l supabase/migrations || echo "No migrations dir"
           echo "--- Git status ---"
           git status --short || true
 
       - name: Create Branch if Changes
         run: |
           set -e
-          echo "⚡ Checking for repo changes..."
-          git status --short
           if [ -n "$(git status --porcelain supabase/migrations supabase/functions)" ]; then
             BRANCH="supabase-sync-$(date +%Y%m%d-%H%M%S)"
             echo "BRANCH=$BRANCH" >> $GITHUB_ENV
@@ -115,7 +68,6 @@ jobs:
             git add supabase/migrations supabase/functions
             git commit -m "chore: auto-sync Supabase schema + functions"
             echo "✅ New branch $BRANCH created with changes"
-            git log -1 --oneline
           else
             echo "ℹ️ No schema or function changes detected."
             echo "SKIP_PR=true" >> $GITHUB_ENV
@@ -125,15 +77,13 @@ jobs:
         if: env.SKIP_PR != 'true'
         run: |
           set -e
-          echo "⚡ Pushing branch $BRANCH to origin..."
+          echo "⚡ Pushing branch $BRANCH to origin"
           git push origin $BRANCH
-          echo "✅ Branch pushed successfully"
 
       - name: Generate Diff Summary
         if: env.SKIP_PR != 'true'
         run: |
           set -e
-          echo "⚡ Generating diff summary..."
           echo "## Supabase Changes" > diff_summary.md
           echo "" >> diff_summary.md
           echo "### Migrations" >> diff_summary.md
@@ -142,7 +92,6 @@ jobs:
           echo "### Edge Functions" >> diff_summary.md
           git diff main...$BRANCH -- supabase/functions >> diff_summary.md || echo "No function changes"
           echo "✅ Diff summary generated"
-          cat diff_summary.md
 
       - name: Open Pull Request
         if: env.SKIP_PR != 'true'
