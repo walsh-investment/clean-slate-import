@@ -1,4 +1,4 @@
-name: Supabase Schema Sync
+name: Supabase Sync (Schema + Edge Functions)
 
 on:
   schedule:
@@ -25,14 +25,27 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
           git pull origin main
-          echo "✅ Repo is up to date with main"
+          echo "✅ Repo updated to latest main"
 
       - name: Install Supabase CLI
-          run: |
-            set -e
-            curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xz
-            sudo mv supabase /usr/local/bin/supabase
-            echo "✅ Supabase CLI installed"
+        run: |
+          set -e
+          echo "⚡ Installing Supabase CLI..."
+          curl -sL https://github.com/supabase/cli/releases/latest/download/supabase_linux_x64.tar.gz | tar -xz
+          sudo mv supabase /usr/local/bin/supabase
+          supabase --version
+          echo "✅ Supabase CLI installed"
+
+      - name: Pull latest Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -e
+          echo "⚡ Syncing Edge Functions from Supabase..."
+          supabase functions pull --project-ref $SUPABASE_PROJECT_REF
+          echo "✅ Edge Functions synced"
+          ls -R supabase/functions || echo "No functions found"
 
       - name: Run supabase db diff
         env:
@@ -51,15 +64,15 @@ jobs:
       - name: Create Branch if Changes
         run: |
           set -e
-          if [ -n "$(git status --porcelain supabase/migrations)" ]; then
+          if [ -n "$(git status --porcelain supabase/migrations supabase/functions)" ]; then
             BRANCH="supabase-sync-$(date +%Y%m%d-%H%M%S)"
             echo "BRANCH=$BRANCH" >> $GITHUB_ENV
             git checkout -b $BRANCH
-            git add supabase/migrations
-            git commit -m "chore: auto-sync Supabase schema"
-            echo "✅ New branch $BRANCH created with schema changes"
+            git add supabase/migrations supabase/functions
+            git commit -m "chore: auto-sync Supabase schema + functions"
+            echo "✅ New branch $BRANCH created with changes"
           else
-            echo "ℹ️ No schema changes detected."
+            echo "ℹ️ No schema or function changes detected."
             echo "SKIP_PR=true" >> $GITHUB_ENV
           fi
 
@@ -74,9 +87,13 @@ jobs:
         if: env.SKIP_PR != 'true'
         run: |
           set -e
-          echo "## Schema Changes" > diff_summary.md
+          echo "## Supabase Changes" > diff_summary.md
           echo "" >> diff_summary.md
-          git diff main...$BRANCH -- supabase/migrations >> diff_summary.md
+          echo "### Migrations" >> diff_summary.md
+          git diff main...$BRANCH -- supabase/migrations >> diff_summary.md || echo "No migration changes"
+          echo "" >> diff_summary.md
+          echo "### Edge Functions" >> diff_summary.md
+          git diff main...$BRANCH -- supabase/functions >> diff_summary.md || echo "No function changes"
           echo "✅ Diff summary generated"
 
       - name: Open Pull Request
@@ -86,5 +103,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.BRANCH }}
           base: main
-          title: "chore: auto-sync Supabase schema"
+          title: "chore: auto-sync Supabase schema + functions"
           body-path: diff_summary.md
