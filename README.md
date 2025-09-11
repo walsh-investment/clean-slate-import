@@ -1,73 +1,119 @@
-# Welcome to your Lovable project
+Niles Family Organizer
 
-## Project info
+Niles is a family-first digital assistant that helps households coordinate events, reminders, tasks, and communications.
+It integrates with Supabase, Telegram, Email, and Google Calendar to provide a seamless, multi-channel experience for families.
 
-**URL**: https://lovable.dev/projects/7d4b19a9-b975-40de-82b4-43f7966aab7a
+🚀 Features
 
-## How can I edit this code?
+Shared Family Calendar
+Centralized event management backed by Supabase with support for Google Calendar sync.
 
-There are several ways of editing your application.
+Multi-Channel Chat with Niles
 
-**Use Lovable**
+Telegram integration (via Edge Functions & webhooks).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7d4b19a9-b975-40de-82b4-43f7966aab7a) and start prompting.
+Planned web-based chat client for browser use.
 
-Changes made via Lovable will be committed automatically to this repo.
+Unified conversation context across channels.
 
-**Use your preferred IDE**
+Email-to-Calendar
+Forward an email (e.g., “Soccer season schedule”) to Niles and automatically parse events into the family calendar.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Personalized Family Profiles
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Admins can define instructions for each family member based on age, role, or preferences.
 
-Follow these steps:
+Example: children get short, encouraging responses, while parents receive detailed summaries.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Profiles stored in Supabase schema and applied at runtime.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Event, Task & Ride Tracking
+Robust SQL schema (app schema in Supabase) supports household-level events, member tasks, rides, and messaging.
 
-# Step 3: Install the necessary dependencies.
-npm i
+Edge Functions for Automation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+telegram-webhook: receives Telegram updates and routes them through Niles.
 
-**Edit a file directly in GitHub**
+telegram-send: sends messages back to family members.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+notes-add, send-email, google-calendar-sync, and others for specialized workflows.
 
-**Use GitHub Codespaces**
+🛠️ Tech Stack
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Backend: Supabase
+ (Postgres, Auth, Edge Functions)
 
-## What technologies are used for this project?
+Database Schema: Custom app schema with full DDL and column-level comments
 
-This project is built with:
+Frontend: React (Lovable.dev boilerplate, customizable web client)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Integrations:
 
-## How can I deploy this project?
+Telegram Bot API (messaging)
 
-Simply open [Lovable](https://lovable.dev/projects/7d4b19a9-b975-40de-82b4-43f7966aab7a) and click on Share -> Publish.
+Email ingestion + parsing (planned)
 
-## Can I connect a custom domain to my Lovable project?
+Google Calendar sync
 
-Yes, you can!
+Infrastructure: GitHub Actions for Supabase schema/function sync
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+📂 Project Structure
+clean-slate-import/   # (to be renamed Niles Family Organizer)
+├── supabase/         # Supabase Edge Functions, migrations, config
+│   ├── functions/    # Edge functions (Telegram, Email, Calendar, Notes, AI Chat)
+│   ├── migrations/   # Database schema migrations
+│   └── config.toml
+├── specs/            # Spec-Kit specs, plans, and tasks
+├── guidelines/       # Spec-Kit guidelines for development
+├── src/              # Frontend React app (Lovable.dev boilerplate)
+└── ...
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+📖 Current Roadmap
+
+Telegram + Web Chat Parity
+Unified messaging experience across mobile and browser.
+
+Email Parsing for Events
+Forward schedules to Niles, parse, and add to family calendar.
+
+Personalized Family Interactions
+Profiles seeded by admin, applied in all Niles responses.
+
+Expand Automation
+Additional edge functions for reminders, notes, and external integrations.
+
+🤝 Contributing
+
+Contributions are welcome! This project uses Spec-Kit
+ for spec-driven development:
+
+Specs define what to build.
+
+Plans define how to build it.
+
+Tasks break work into actionable steps.
+
+Check the specs/ and guidelines/ folders to see the current iteration.
+
+🔐 Secrets & Environment
+
+This project depends on environment variables managed in Supabase & GitHub Actions.
+
+SUPABASE_DB_URL
+
+SUPABASE_PROJECT_REF
+
+SUPABASE_ACCESS_TOKEN
+
+TELEGRAM_BOT_TOKEN
+
+Ensure these are properly set before deploying functions.
+
+📛 Project Naming
+
+This repo (clean-slate-import) will be renamed to:
+niles-family-organizer
+
+📅 License
+
+TBD (currently private development).
