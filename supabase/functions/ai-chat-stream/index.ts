@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
           // Send completion event
           console.log('Sending completion event');
           controller.enqueue(`data: ${JSON.stringify({ 
-            type: 'complete',
+            type: 'done',
             full_response: fullResponse 
           })}\n\n`);
           

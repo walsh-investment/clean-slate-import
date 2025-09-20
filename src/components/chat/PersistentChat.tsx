@@ -156,7 +156,7 @@ export const PersistentChat: React.FC = () => {
                     ? { ...msg, content: msg.content + data.content }
                     : msg
                 ));
-              } else if (data.type === 'complete') {
+              } else if (data.type === 'done') {
                 console.log('Stream completed successfully');
                 setIsLoading(false);
                 streamComplete = true;
