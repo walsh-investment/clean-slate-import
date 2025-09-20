@@ -83,35 +83,93 @@ export const PersistentChat: React.FC = () => {
     setInput('');
     setIsLoading(true);
 
+    // Create assistant message for streaming updates
+    const assistantMessageId = (Date.now() + 1).toString();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      content: '',
+      role: 'assistant',
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: {
-          message: messageText.trim(),
-          household_id: household.id,
-          user_id: user?.id
+      // Use fetch for SSE streaming with POST data
+      const response = await fetch(
+        `https://wkhxircgcysdzmofwnbr.functions.supabase.co/ai-chat-stream`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: messageText.trim(),
+            household_id: household.id,
+            user_id: user?.id
+          })
         }
-      });
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: data.response || 'Sorry, I encountered an error. Please try again.',
-        role: 'assistant',
-        timestamp: new Date().toISOString()
-      };
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body reader available');
+      }
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'connected') {
+                setIsConnected(true);
+              } else if (data.type === 'content') {
+                // Update the assistant message with streaming content
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: msg.content + data.content }
+                    : msg
+                ));
+              } else if (data.type === 'complete') {
+                // Stream completed successfully
+                setIsLoading(false);
+                break;
+              } else if (data.type === 'error') {
+                throw new Error(data.error);
+              }
+            } catch (parseError) {
+              console.error('Error parsing SSE data:', parseError);
+            }
+          }
+        }
+      }
+
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error. Please try again.',
-        role: 'assistant',
-        timestamp: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
+      console.error('Error with streaming request:', error);
+      setIsConnected(false);
+      
+      // Update assistant message with error
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { ...msg, content: 'Sorry, I encountered a connection error. Please try again.' }
+          : msg
+      ));
       setIsLoading(false);
     }
   };
