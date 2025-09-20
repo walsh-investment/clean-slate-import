@@ -116,7 +116,9 @@ export const PersistentChat: React.FC = () => {
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const reader = response.body?.getReader();

@@ -15,15 +15,23 @@ console.log("Environment check:", {
 });
 
 if (!openaiKey) {
-  console.error("OPENAI_API_KEY is missing or empty");
-  throw new Error("OPENAI_API_KEY environment variable is required");
+  console.error("OPENAI_API_KEY missing at runtime");
+  await logError(
+    'openai_key_missing',
+    'critical',
+    'ai_chat_stream',
+    'edge_function',
+    'OPENAI_API_KEY not visible to runtime',
+    '',
+    {}
+  );
 }
 
 // Initialize clients
 const supabase = createClient(supabaseUrl!, supabaseKey!);
-const openai = new OpenAI({
+const openai = openaiKey ? new OpenAI({
   apiKey: openaiKey
-});
+}) : null;
 
 // CORS headers for SSE
 const corsHeaders = {
@@ -105,6 +113,26 @@ Deno.serve(async (req) => {
         error: "Missing required parameters"
       }), {
         status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Check if OpenAI client is available
+    if (!openai) {
+      await logError(
+        'openai_unavailable',
+        'critical',
+        'ai_chat_stream',
+        'edge_function',
+        'OpenAI client not initialized - API key missing',
+        '',
+        { household_id: householdId, user_id: userId }
+      );
+      
+      return new Response(JSON.stringify({
+        error: "AI service temporarily unavailable"
+      }), {
+        status: 503,
         headers: { "Content-Type": "application/json" }
       });
     }
