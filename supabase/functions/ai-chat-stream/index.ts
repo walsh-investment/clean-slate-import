@@ -8,8 +8,19 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const openaiKey = Deno.env.get("OPENAI_API_KEY");
 
+console.log("Environment check:", {
+  supabaseUrl: !!supabaseUrl,
+  supabaseKey: !!supabaseKey,
+  openaiKey: !!openaiKey
+});
+
+if (!openaiKey) {
+  console.error("OPENAI_API_KEY is missing or empty");
+  throw new Error("OPENAI_API_KEY environment variable is required");
+}
+
 // Initialize clients
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl!, supabaseKey!);
 const openai = new OpenAI({
   apiKey: openaiKey
 });

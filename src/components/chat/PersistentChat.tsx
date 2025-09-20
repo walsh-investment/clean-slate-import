@@ -102,6 +102,7 @@ export const PersistentChat: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
           },
           body: JSON.stringify({
             message: messageText.trim(),
@@ -110,6 +111,9 @@ export const PersistentChat: React.FC = () => {
           })
         }
       );
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -163,6 +167,24 @@ export const PersistentChat: React.FC = () => {
     } catch (error) {
       console.error('Error with streaming request:', error);
       setIsConnected(false);
+      
+      // Log error to backend error system via RPC
+      try {
+        await supabase.rpc('exec_sql', {
+          query_text: `
+            SELECT upsert_error_aggregate(
+              'chat_connection_failed',
+              'error'::app.error_level,
+              'ai_chat_stream',
+              'client'::app.error_scope,
+              'Chat connection failed: ${error instanceof Error ? error.message.replace(/'/g, "''") : 'Unknown error'}',
+              '${error instanceof Error ? (error.stack || '').replace(/'/g, "''") : ''}'
+            )
+          `
+        });
+      } catch (logError) {
+        console.error('Failed to log error:', logError);
+      }
       
       // Update assistant message with error
       setMessages(prev => prev.map(msg => 
