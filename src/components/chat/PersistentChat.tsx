@@ -128,11 +128,12 @@ export const PersistentChat: React.FC = () => {
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let streamComplete = false;
 
       while (true) {
         const { done, value } = await reader.read();
         
-        if (done) break;
+        if (done || streamComplete) break;
         
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -142,10 +143,13 @@ export const PersistentChat: React.FC = () => {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              console.log('SSE Event received:', data.type, data);
               
               if (data.type === 'connected') {
+                console.log('Connected to chat stream');
                 setIsConnected(true);
               } else if (data.type === 'content') {
+                console.log('Content chunk:', data.content.length, 'chars');
                 // Update the assistant message with streaming content
                 setMessages(prev => prev.map(msg => 
                   msg.id === assistantMessageId 
@@ -153,14 +157,16 @@ export const PersistentChat: React.FC = () => {
                     : msg
                 ));
               } else if (data.type === 'complete') {
-                // Stream completed successfully
+                console.log('Stream completed successfully');
                 setIsLoading(false);
+                streamComplete = true;
                 break;
               } else if (data.type === 'error') {
+                console.error('Server error:', data.error);
                 throw new Error(data.error);
               }
             } catch (parseError) {
-              console.error('Error parsing SSE data:', parseError);
+              console.error('Error parsing SSE data:', parseError, 'Raw line:', line);
             }
           }
         }

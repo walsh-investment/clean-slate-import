@@ -188,11 +188,13 @@ Deno.serve(async (req) => {
           extractAndStoreMemories(message, fullResponse, householdId);
           
           // Send completion event
+          console.log('Sending completion event');
           controller.enqueue(`data: ${JSON.stringify({ 
             type: 'complete',
             full_response: fullResponse 
           })}\n\n`);
           
+          console.log('Closing SSE stream');
           controller.close();
           
         } catch (error) {
