@@ -163,6 +163,8 @@ export const PersistentChat: React.FC = () => {
                 break;
               } else if (data.type === 'error') {
                 console.error('Server error:', data.error);
+                setIsLoading(false);
+                streamComplete = true;
                 throw new Error(data.error);
               }
             } catch (parseError) {
