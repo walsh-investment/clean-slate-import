@@ -44,24 +44,18 @@ export const PersistentChat: React.FC = () => {
       if (!household?.id) return;
 
       try {
-        const { data, error } = await supabase.rpc('exec_sql', {
-          query_text: `
-            SELECT id, body as content, subject as role, created_at as timestamp
-            FROM app.messages_log 
-            WHERE household_id = '${household.id}'
-              AND channel = 'chat'
-            ORDER BY created_at ASC
-            LIMIT 50
-          `
+        const { data, error } = await supabase.rpc('get_chat_history' as any, {
+          household_id: household.id,
+          limit_count: 50
         });
 
         if (error) throw error;
 
         const formattedMessages: Message[] = Array.isArray(data) ? data.map((row: any) => ({
-          id: row.id || Math.random().toString(),
+          id: Math.random().toString(),
           content: row.content || '',
-          role: row.role === 'user' ? 'user' : 'assistant',
-          timestamp: row.timestamp || new Date().toISOString()
+          role: (row.role === 'user' || row.role === 'assistant') ? row.role : 'assistant',
+          timestamp: row.created_at || new Date().toISOString()
         })) : [];
 
         setMessages(formattedMessages);
@@ -230,17 +224,13 @@ export const PersistentChat: React.FC = () => {
 
   const logClientError = async (fingerprint: string, message: string, error: any) => {
     try {
-      await supabase.rpc('exec_sql', {
-        query_text: `
-          SELECT upsert_error_aggregate(
-            '${fingerprint}',
-            'error'::app.error_level,
-            'ai_chat_stream',
-            'client'::app.error_scope,
-            '${message}: ${error instanceof Error ? error.message.replace(/'/g, "''") : 'Unknown error'}',
-            '${error instanceof Error ? (error.stack || '').replace(/'/g, "''") : ''}'
-          )
-        `
+      await supabase.rpc('upsert_error_aggregate', {
+        p_fingerprint: fingerprint,
+        p_level: 'error',
+        p_category: 'ai_chat_stream',
+        p_scope: 'client',
+        p_message: `${message}: ${error instanceof Error ? error.message.replace(/'/g, "''") : 'Unknown error'}`,
+        p_stack: error instanceof Error ? (error.stack || '').replace(/'/g, "''") : ''
       });
     } catch (logError) {
       console.error('Failed to log client error:', logError);

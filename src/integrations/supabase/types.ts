@@ -49,6 +49,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      exec_sql: {
+        Args: { query_text: string }
+        Returns: Json
+      }
       explain_query: {
         Args: { query_text: string }
         Returns: string

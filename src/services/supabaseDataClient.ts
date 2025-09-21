@@ -12,7 +12,7 @@ class SupabaseDataClient {
       
       query += ' ORDER BY event_date ASC';
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -33,7 +33,7 @@ class SupabaseDataClient {
                 '${event.source || 'manual'}', '${event.created_by || ''}') 
         RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -53,7 +53,7 @@ class SupabaseDataClient {
       
       const query = `UPDATE app.events SET ${setClause} WHERE id = '${id}' RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -67,7 +67,7 @@ class SupabaseDataClient {
 
   async deleteEvent(id: string): Promise<void> {
     try {
-      const { error } = await supabase.rpc('exec_sql', {
+      const { error } = await supabase.rpc('exec_sql' as any, {
         query_text: `DELETE FROM app.events WHERE id = '${id}'`
       });
       
@@ -88,7 +88,7 @@ class SupabaseDataClient {
       
       query += ' ORDER BY created_at DESC';
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -108,7 +108,7 @@ class SupabaseDataClient {
                 '${task.due_date || ''}', '${task.created_by || ''}') 
         RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -128,7 +128,7 @@ class SupabaseDataClient {
       
       const query = `UPDATE app.tasks SET ${setClause} WHERE id = '${id}' RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -142,7 +142,7 @@ class SupabaseDataClient {
 
   async deleteTask(id: string): Promise<void> {
     try {
-      const { error } = await supabase.rpc('exec_sql', {
+      const { error } = await supabase.rpc('exec_sql' as any, {
         query_text: `DELETE FROM app.tasks WHERE id = '${id}'`
       });
       
@@ -163,7 +163,7 @@ class SupabaseDataClient {
       
       query += ' ORDER BY display_name ASC';
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -183,7 +183,7 @@ class SupabaseDataClient {
                 '${person.color_hex || '#3B82F6'}', ${person.is_active !== false}) 
         RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -198,7 +198,7 @@ class SupabaseDataClient {
   // Households
   async getHouseholds(): Promise<any[]> {
     try {
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: 'SELECT * FROM app.households ORDER BY created_at DESC'
       });
       
@@ -256,7 +256,7 @@ class SupabaseDataClient {
       
       query += ' ORDER BY created_at DESC';
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -276,7 +276,7 @@ class SupabaseDataClient {
                 '${offer.status || 'proposed'}', '${offer.notes || ''}') 
         RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -296,7 +296,7 @@ class SupabaseDataClient {
       
       const query = `UPDATE app.ride_offers SET ${setClause} WHERE id = '${id}' RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -321,7 +321,7 @@ class SupabaseDataClient {
       
       query += ' ORDER BY m.created_at DESC';
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -342,7 +342,7 @@ class SupabaseDataClient {
                 '${message.due_time || ''}') 
         RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
@@ -362,7 +362,7 @@ class SupabaseDataClient {
       
       const query = `UPDATE app.messages SET ${setClause} WHERE id = '${id}' RETURNING *`;
       
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: query
       });
       
