@@ -14,21 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      kv_store_84035cd9: {
-        Row: {
-          key: string
-          value: Json
-        }
-        Insert: {
-          key: string
-          value: Json
-        }
-        Update: {
-          key?: string
-          value?: Json
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -64,9 +49,71 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      exec_sql: {
+      explain_query: {
         Args: { query_text: string }
-        Returns: Json
+        Returns: string
+      }
+      information_columns: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
+      information_table_constraints: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
+      information_tables: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
+      information_views: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
+      pg_column_comments: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          column_name: string
+          comment: string
+          schema_name: string
+          table_name: string
+        }[]
+      }
+      pg_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
+      pg_table_comments: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          comment: string
+          schema_name: string
+          table_name: string
+        }[]
+      }
+      upsert_error_aggregate: {
+        Args: {
+          p_category: string
+          p_fingerprint: string
+          p_level:
+            | "debug"
+            | "info"
+            | "notice"
+            | "warning"
+            | "error"
+            | "critical"
+            | "alert"
+            | "emergency"
+          p_message: string
+          p_scope:
+            | "client"
+            | "edge_function"
+            | "database"
+            | "job"
+            | "integration"
+            | "unknown"
+          p_stack: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
