@@ -91,12 +91,25 @@ Deno.serve(async (req) => {
 
   let householdId: string | undefined;
   let userId: string | undefined;
+  let message: string | undefined;
+  let historyLimit = 5;
   
   try {
-    // Parse request
-    const { message, household_id, user_id, history_limit = 5 } = await req.json();
-    householdId = household_id;
-    userId = user_id;
+    // Handle both GET (EventSource) and POST requests
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      message = url.searchParams.get('message') || '';
+      householdId = url.searchParams.get('household_id') || undefined;
+      userId = url.searchParams.get('user_id') || undefined;
+      historyLimit = parseInt(url.searchParams.get('history_limit') || '5');
+    } else {
+      // POST request
+      const body = await req.json();
+      message = body.message;
+      householdId = body.household_id;
+      userId = body.user_id;
+      historyLimit = body.history_limit || 5;
+    }
     
     if (!message || !householdId) {
       await logError(
@@ -144,16 +157,21 @@ Deno.serve(async (req) => {
           // Send initial connection event
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
           
-          // Send periodic heartbeats
+          // Send periodic heartbeats every 20 seconds
           const heartbeatInterval = setInterval(() => {
-            controller.enqueue(`: heartbeat\n\n`);
-          }, 10000);
+            try {
+              controller.enqueue(`: heartbeat\n\n`);
+            } catch (e) {
+              console.log('Heartbeat failed - stream likely closed');
+              clearInterval(heartbeatInterval);
+            }
+          }, 20000);
 
           // 1. Fetch relevant notes using semantic search
           const relevantNotes = await fetchRelevantNotes(message, householdId);
           
           // 2. Get recent conversation history
-          const chatHistory = await fetchChatHistory(householdId, history_limit);
+          const chatHistory = await fetchChatHistory(householdId, historyLimit);
           
           // 3. Generate system prompt with memory context
           const formattedSystemPrompt = SYSTEM_PROMPT
@@ -250,15 +268,23 @@ Deno.serve(async (req) => {
 // Helper functions
 async function fetchRelevantNotes(query: string, householdId: string) {
   try {
-    // Use semantic search on events_semantic table
+    // Use semantic search on events_semantic table with correct columns
     const { data, error } = await supabase
       .from("memories.events_semantic")
-      .select("id, content, created_at")
+      .select("event_id, text_for_search, created_at")
       .eq("household_id", householdId)
       .limit(5);
     
     if (error) throw error;
-    return data || [];
+    
+    // Format the data to match expected structure
+    const formattedData = data?.map(row => ({
+      id: row.event_id,
+      content: row.text_for_search,
+      created_at: row.created_at
+    })) || [];
+    
+    return formattedData;
   } catch (e) {
     console.error("Error fetching relevant events:", e);
     
