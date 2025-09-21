@@ -143,6 +143,11 @@ Deno.serve(async (req) => {
         try {
           // Send initial connection event
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
+          
+          // Send periodic heartbeats
+          const heartbeatInterval = setInterval(() => {
+            controller.enqueue(`: heartbeat\n\n`);
+          }, 10000);
 
           // 1. Fetch relevant notes using semantic search
           const relevantNotes = await fetchRelevantNotes(message, householdId);
@@ -157,14 +162,13 @@ Deno.serve(async (req) => {
 
           // 4. Generate streaming AI response
           const stream = await openai.chat.completions.create({
-            model: "gpt-4",
+            model: "gpt-4o-mini",
             messages: [
               { role: "system", content: formattedSystemPrompt },
               ...chatHistory,
               { role: "user", content: message }
             ],
-            temperature: 0.7,
-            max_tokens: 1000,
+            max_completion_tokens: 1000,
             stream: true
           });
 
@@ -189,10 +193,8 @@ Deno.serve(async (req) => {
           
           // Send completion event
           console.log('Sending completion event');
-          controller.enqueue(`data: ${JSON.stringify({ 
-            type: 'done',
-            full_response: fullResponse 
-          })}\n\n`);
+          clearInterval(heartbeatInterval);
+          controller.enqueue(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
           
           console.log('Closing SSE stream');
           controller.close();
@@ -210,6 +212,7 @@ Deno.serve(async (req) => {
             { household_id: householdId, user_id: userId, message_length: message?.length }
           );
           
+          clearInterval(heartbeatInterval);
           controller.enqueue(`data: ${JSON.stringify({ 
             type: 'error', 
             error: 'Internal server error' 
@@ -247,35 +250,34 @@ Deno.serve(async (req) => {
 // Helper functions
 async function fetchRelevantNotes(query: string, householdId: string) {
   try {
-    // Try semantic search first
-    const { data, error } = await supabase.rpc("search_notes", {
-      query_text: query,
-      household_filter: householdId,
-      match_limit: 5
-    });
+    // Use semantic search on events_semantic table
+    const { data, error } = await supabase
+      .from("memories.events_semantic")
+      .select("id, content, created_at")
+      .eq("household_id", householdId)
+      .limit(5);
     
     if (error) throw error;
     return data || [];
   } catch (e) {
-    console.error("Error fetching relevant notes:", e);
+    console.error("Error fetching relevant events:", e);
     
     await logError(
-      'notes_fetch_error',
+      'events_fetch_error',
       'warning',
       'memory_system',
       'database',
-      `Failed to fetch relevant notes: ${e.message}`,
+      `Failed to fetch relevant events: ${e.message}`,
       e.stack || '',
       { household_id: householdId, query_length: query.length }
     );
     
-    // Fallback to keyword search
+    // Fallback to notes table
     try {
       const { data } = await supabase
         .from("memories.notes")
         .select("id, content, created_at")
         .eq("household_id", householdId)
-        .textSearch("content", query.split(" ").join(" | "))
         .limit(5);
       return data || [];
     } catch (fallbackError) {

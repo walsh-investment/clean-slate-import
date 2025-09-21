@@ -129,17 +129,50 @@ export const PersistentChat: React.FC = () => {
       const decoder = new TextDecoder();
       let buffer = '';
       let streamComplete = false;
+      
+      // Set up 70-second timeout
+      const timeoutId = setTimeout(() => {
+        if (!streamComplete) {
+          console.log('Stream timeout - closing connection');
+          reader.cancel();
+          setIsLoading(false);
+          setIsConnected(false);
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: msg.content + '\n\n[Connection timeout. Please try again.]' }
+              : msg
+          ));
+          
+          // Add retry button message
+          const retryMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            content: '',
+            role: 'assistant',
+            timestamp: new Date().toISOString()
+          };
+          setMessages(prev => [...prev, retryMessage]);
+        }
+      }, 70000);
 
       while (true) {
         const { done, value } = await reader.read();
         
-        if (done || streamComplete) break;
+        if (done || streamComplete) {
+          clearTimeout(timeoutId);
+          break;
+        }
         
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || ''; // Keep incomplete line in buffer
         
         for (const line of lines) {
+          // Handle heartbeat lines (ignore them)
+          if (line.startsWith(': ')) {
+            console.log('Heartbeat received');
+            continue;
+          }
+          
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
@@ -160,12 +193,20 @@ export const PersistentChat: React.FC = () => {
                 console.log('Stream completed successfully');
                 setIsLoading(false);
                 streamComplete = true;
+                clearTimeout(timeoutId);
                 break;
               } else if (data.type === 'error') {
                 console.error('Server error:', data.error);
                 setIsLoading(false);
                 streamComplete = true;
+                clearTimeout(timeoutId);
                 throw new Error(data.error);
+              } else if (data.type === 'complete') {
+                console.log('Stream completed successfully (legacy event)');
+                setIsLoading(false);
+                streamComplete = true;
+                clearTimeout(timeoutId);
+                break;
               }
             } catch (parseError) {
               console.error('Error parsing SSE data:', parseError, 'Raw line:', line);
@@ -345,11 +386,30 @@ export const PersistentChat: React.FC = () => {
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
                         )}>
-                          {message.content}
+                          {message.content || (
+                            <div className="flex items-center gap-2">
+                              <span>Connection timed out.</span>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => {
+                                  const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+                                  if (lastUserMessage) {
+                                    sendMessage(lastUserMessage.content);
+                                  }
+                                }}
+                                className="ml-2"
+                              >
+                                Retry
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-xs text-muted-foreground mt-1">
-                          {formatTime(message.timestamp)}
-                        </span>
+                        {message.content && (
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {formatTime(message.timestamp)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))
