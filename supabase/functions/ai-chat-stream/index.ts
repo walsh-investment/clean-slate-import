@@ -268,79 +268,53 @@ Deno.serve(async (req) => {
 // Helper functions
 async function fetchRelevantNotes(query: string, householdId: string) {
   try {
-    // Use semantic search on events_semantic table with correct columns
-    const { data, error } = await supabase
-      .from("memories.events_semantic")
-      .select("event_id, text_for_search, created_at")
-      .eq("household_id", householdId)
-      .limit(5);
+    // Use the RPC function in memories schema
+    const { data: relevantNotes, error: notesError } = await supabase
+      .schema('memories')
+      .rpc('search_memories', {
+        query_text: query,
+        household_id: householdId,
+        match_limit: 5
+      });
     
-    if (error) throw error;
+    if (notesError) throw notesError;
     
-    // Format the data to match expected structure
-    const formattedData = data?.map(row => ({
-      id: row.event_id,
-      content: row.text_for_search,
-      created_at: row.created_at
-    })) || [];
-    
-    return formattedData;
+    return relevantNotes || [];
   } catch (e) {
-    console.error("Error fetching relevant events:", e);
+    console.error("Error fetching relevant notes:", e);
     
     await logError(
-      'events_fetch_error',
+      'notes_fetch_error',
       'warning',
       'memory_system',
       'database',
-      `Failed to fetch relevant events: ${e.message}`,
+      `Failed to fetch relevant notes: ${e.message}`,
       e.stack || '',
       { household_id: householdId, query_length: query.length }
     );
     
-    // Fallback to notes table
-    try {
-      const { data } = await supabase
-        .from("memories.notes")
-        .select("id, content, created_at")
-        .eq("household_id", householdId)
-        .limit(5);
-      return data || [];
-    } catch (fallbackError) {
-      await logError(
-        'notes_fallback_error',
-        'error',
-        'memory_system',
-        'database',
-        `Fallback notes search failed: ${fallbackError.message}`,
-        fallbackError.stack || '',
-        { household_id: householdId }
-      );
-      return [];
-    }
+    return [];
   }
 }
 
 async function fetchChatHistory(householdId: string, limit: number) {
   try {
-    const { data, error } = await supabase
-      .from("app.messages_log")
-      .select("subject, body, created_at")
-      .eq("household_id", householdId)
-      .eq("channel", "chat")
-      .order("created_at", { ascending: false })
-      .limit(limit * 2);
+    // Use the RPC function in app schema
+    const { data: chatHistory, error: historyError } = await supabase
+      .schema('app')
+      .rpc('get_chat_history', {
+        household_id: householdId,
+        limit_count: limit
+      });
     
-    if (error) throw error;
+    if (historyError) throw historyError;
     
     // Format into OpenAI message format
     const messages = [];
-    for (let i = data.length - 1; i >= 0; i--) {
-      const msg = data[i];
-      if (msg.subject === "user") {
-        messages.push({ role: "user", content: msg.body });
-      } else if (msg.subject === "assistant") {
-        messages.push({ role: "assistant", content: msg.body });
+    if (chatHistory) {
+      for (let i = chatHistory.length - 1; i >= 0; i--) {
+        const msg = chatHistory[i];
+        messages.push({ role: msg.role, content: msg.content });
       }
     }
     
