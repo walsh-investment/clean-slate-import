@@ -23,7 +23,10 @@ export const PersistentChat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [showRetry, setShowRetry] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useAuth();
   const { household } = useHousehold();
 
@@ -41,23 +44,18 @@ export const PersistentChat: React.FC = () => {
       if (!household?.id) return;
 
       try {
-        const { data, error } = await supabase.rpc('exec_sql', {
-          query_text: `
-            SELECT id, body as content, subject as role, created_at as timestamp
-            FROM app.messages_log 
-            WHERE household_id = '${household.id}'
-            ORDER BY created_at ASC
-            LIMIT 50
-          `
+        const { data, error } = await supabase.rpc('get_chat_history' as any, {
+          household_id: household.id,
+          limit_count: 50
         });
 
         if (error) throw error;
 
         const formattedMessages: Message[] = Array.isArray(data) ? data.map((row: any) => ({
-          id: row.id || Math.random().toString(),
+          id: Math.random().toString(),
           content: row.content || '',
-          role: row.role === 'user' ? 'user' : 'assistant',
-          timestamp: row.timestamp || new Date().toISOString()
+          role: (row.role === 'user' || row.role === 'assistant') ? row.role : 'assistant',
+          timestamp: row.created_at || new Date().toISOString()
         })) : [];
 
         setMessages(formattedMessages);
@@ -68,6 +66,18 @@ export const PersistentChat: React.FC = () => {
 
     loadChatHistory();
   }, [household?.id]);
+
+  const cleanupConnection = () => {
+    if (eventSourceRef.current) {
+      console.log('Cleaning up EventSource connection');
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading || !household?.id) return;
@@ -82,37 +92,148 @@ export const PersistentChat: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setShowRetry(false);
+
+    // Create assistant message for streaming updates
+    const assistantMessageId = (Date.now() + 1).toString();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      content: '',
+      role: 'assistant',
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: {
-          message: messageText.trim(),
-          household_id: household.id,
-          user_id: user?.id
-        }
+      // Use EventSource for better SSE reliability
+      const supabaseUrl = 'https://wkhxircgcysdzmofwnbr.supabase.co';
+      const session = await supabase.auth.getSession();
+      
+      // Construct URL with query params for GET request
+      const params = new URLSearchParams({
+        message: messageText.trim(),
+        household_id: household.id,
+        user_id: user?.id || '',
+        authorization: session.data.session?.access_token || ''
       });
 
-      if (error) throw error;
+      const eventSourceUrl = `${supabaseUrl}/functions/v1/ai-chat-stream?${params}`;
+      console.log('Connecting to EventSource:', eventSourceUrl);
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: data.response || 'Sorry, I encountered an error. Please try again.',
-        role: 'assistant',
-        timestamp: new Date().toISOString()
+      eventSourceRef.current = new EventSource(eventSourceUrl);
+      
+      // Set up 70-second timeout with retry option
+      timeoutRef.current = setTimeout(() => {
+        console.log('Connection timeout - showing retry option');
+        cleanupConnection();
+        setIsLoading(false);
+        setIsConnected(false);
+        setShowRetry(true);
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: msg.content + '\n\n[Connection timed out]' }
+            : msg
+        ));
+      }, 70000);
+
+      eventSourceRef.current.onopen = () => {
+        console.log('EventSource connection opened');
+        setIsConnected(true);
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      eventSourceRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('SSE Event received:', data.type, data);
+          
+          // Reset timeout on any message (including heartbeats)
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => {
+              console.log('Connection timeout after heartbeat reset');
+              cleanupConnection();
+              setIsLoading(false);
+              setIsConnected(false);
+              setShowRetry(true);
+            }, 70000);
+          }
+
+          if (data.type === 'connected') {
+            console.log('Connected to chat stream');
+            setIsConnected(true);
+          } else if (data.type === 'content') {
+            console.log('Content chunk:', data.content?.length || 0, 'chars');
+            setMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId 
+                ? { ...msg, content: msg.content + (data.content || '') }
+                : msg
+            ));
+          } else if (data.type === 'done' || data.type === 'complete') {
+            console.log('Stream completed successfully');
+            setIsLoading(false);
+            cleanupConnection();
+          } else if (data.type === 'error') {
+            console.error('Server error:', data.error);
+            setIsLoading(false);
+            cleanupConnection();
+            throw new Error(data.error || 'Server error');
+          } else if (data.type === 'heartbeat') {
+            console.log('Heartbeat received');
+          }
+        } catch (parseError) {
+          console.error('Error parsing SSE data:', parseError, 'Raw event:', event.data);
+        }
+      };
+
+      eventSourceRef.current.onerror = (error) => {
+        console.error('EventSource error:', error);
+        cleanupConnection();
+        setIsLoading(false);
+        setIsConnected(false);
+        setShowRetry(true);
+        
+        // Log error to backend
+        logClientError('chat_eventsource_error', 'EventSource connection failed', error);
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: msg.content || 'Connection failed. Please try again.' }
+            : msg
+        ));
+      };
+
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error. Please try again.',
-        role: 'assistant',
-        timestamp: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
+      console.error('Error setting up EventSource:', error);
+      cleanupConnection();
       setIsLoading(false);
+      setIsConnected(false);
+      setShowRetry(true);
+      
+      // Log error to backend
+      logClientError('chat_setup_error', 'Failed to setup chat connection', error);
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { ...msg, content: 'Sorry, I encountered a connection error. Please try again.' }
+          : msg
+      ));
+    }
+  };
+
+  const logClientError = async (fingerprint: string, message: string, error: any) => {
+    try {
+      await supabase.rpc('upsert_error_aggregate', {
+        p_fingerprint: fingerprint,
+        p_level: 'error',
+        p_category: 'ai_chat_stream',
+        p_scope: 'client',
+        p_message: `${message}: ${error instanceof Error ? error.message.replace(/'/g, "''") : 'Unknown error'}`,
+        p_stack: error instanceof Error ? (error.stack || '').replace(/'/g, "''") : ''
+      });
+    } catch (logError) {
+      console.error('Failed to log client error:', logError);
     }
   };
 
@@ -128,12 +249,27 @@ export const PersistentChat: React.FC = () => {
     setInput('');
   };
 
+  const handleRetry = () => {
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+    if (lastUserMessage) {
+      setShowRetry(false);
+      sendMessage(lastUserMessage.content);
+    }
+  };
+
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupConnection();
+    };
+  }, []);
 
   return (
     <div className="border-b border-border bg-card/50 backdrop-blur-sm">
@@ -257,9 +393,11 @@ export const PersistentChat: React.FC = () => {
                         )}>
                           {message.content}
                         </div>
-                        <span className="text-xs text-muted-foreground mt-1">
-                          {formatTime(message.timestamp)}
-                        </span>
+                        {message.content && (
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {formatTime(message.timestamp)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))
@@ -275,6 +413,27 @@ export const PersistentChat: React.FC = () => {
                     <div className="bg-muted rounded-lg px-4 py-2 flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm text-muted-foreground">Niles is thinking...</span>
+                    </div>
+                  </div>
+                )}
+                
+                {showRetry && (
+                  <div className="flex gap-3">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <Bot className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-muted rounded-lg px-4 py-2 flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Connection failed.</span>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={handleRetry}
+                        className="ml-2"
+                      >
+                        Retry
+                      </Button>
                     </div>
                   </div>
                 )}

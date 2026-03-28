@@ -41,7 +41,7 @@ export const SystemPromptsTab: React.FC = () => {
 
   const fetchPrompts = async () => {
     try {
-      const { data, error } = await supabase.rpc('exec_sql', {
+      const { data, error } = await supabase.rpc('exec_sql' as any, {
         query_text: 'SELECT * FROM app.system_prompts ORDER BY created_at DESC'
       });
 
@@ -69,7 +69,7 @@ export const SystemPromptsTab: React.FC = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('exec_sql', {
+      const { error } = await supabase.rpc('exec_sql' as any, {
         query_text: `INSERT INTO app.system_prompts (name, feature, prompt_text, version, scope, active) 
                      VALUES ('${formData.name}', '${formData.feature}', '${formData.prompt_text}', 1, '${formData.scope}', true)`
       });
@@ -98,7 +98,7 @@ export const SystemPromptsTab: React.FC = () => {
 
   const togglePromptStatus = async (id: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase.rpc('exec_sql', {
+      const { error } = await supabase.rpc('exec_sql' as any, {
         query_text: `UPDATE app.system_prompts SET active = ${!currentStatus} WHERE id = '${id}'`
       });
 
@@ -121,7 +121,7 @@ export const SystemPromptsTab: React.FC = () => {
 
   const deletePrompt = async (id: string) => {
     try {
-      const { error } = await supabase.rpc('exec_sql', {
+      const { error } = await supabase.rpc('exec_sql' as any, {
         query_text: `DELETE FROM app.system_prompts WHERE id = '${id}'`
       });
 
