@@ -1,0 +1,35 @@
+schema_version: "1.0"
+
+preset:
+  id: "stack-workflow"
+  name: "Stack Workflow Preset"
+  version: "1.0.0"
+  description: "Stack-specific workflow enhancements: scenario matrices, formula specs, structural tasks, test planning"
+  author: "Stack"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=1.2.0"
+
+provides:
+  templates:
+    - type: "template"
+      name: "spec-template"
+      file: "templates/spec-template.md"
+      description: "Spec template with scenario matrix per user story"
+      replaces: "spec-template"
+
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/speckit.plan.md"
+      description: "Plan command with test-plan.md and formula spec blocks"
+
+    - type: "command"
+      name: "speckit.tasks"
+      file: "commands/speckit.tasks.md"
+      description: "Tasks command with contract sync, close-out, and cross-repo attestation"
+
+tags:
+  - "workflow"
+  - "quality"
+  - "testing"

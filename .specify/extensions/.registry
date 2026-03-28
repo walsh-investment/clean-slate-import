@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "cleanup": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:b15a5e3b4e5b43f867c093d962492f502b01503d0ec174611d0797854b017578",
+      "enabled": true,
+      "registered_commands": {
+        "copilot": [
+          "speckit.cleanup.run",
+          "speckit.cleanup"
+        ]
+      },
+      "installed_at": "2026-02-28T19:45:11.356005+00:00"
+    }
+  }
+}

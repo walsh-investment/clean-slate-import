@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+### BEGIN DEPLOY-MANAGER MANAGED ###
+# event: pre-commit
+
+# BEGIN FRAGMENT: common/pre-commit-xlsx-validate
+#!/usr/bin/env bash
+set -euo pipefail
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(xlsx|xlsm)$' || true)
+if [ -z "${staged_files}" ]; then
+  exit 0
+fi
+
+validator="scripts/validate-xlsx.py"
+if [ ! -f "${validator}" ]; then
+  echo "WARN: ${validator} not found, skipping xlsx validation." >&2
+  exit 0
+fi
+
+python_cmd=""
+if command -v python >/dev/null 2>&1; then
+  python_cmd="python"
+elif command -v py >/dev/null 2>&1; then
+  python_cmd="py -3"
+else
+  echo "WARN: Python not available, skipping xlsx validation." >&2
+  exit 0
+fi
+
+# shellcheck disable=SC2086
+set +e
+${python_cmd} "${validator}" ${staged_files}
+code=$?
+set -e
+
+if [ ${code} -eq 0 ]; then
+  exit 0
+fi
+
+if [ ${code} -eq 2 ]; then
+  echo "WARN: XLSX runtime validation unavailable; commit allowed." >&2
+  exit 0
+fi
+
+echo "ERROR: XLSX validation failed; commit blocked." >&2
+exit 1
+# END FRAGMENT: common/pre-commit-xlsx-validate
+### END DEPLOY-MANAGER MANAGED ###

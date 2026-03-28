@@ -1,0 +1,28 @@
+{
+  "severity_thresholds": {
+    "critical": true,
+    "warning": true,
+    "info": true
+  },
+  "exclude_paths": [
+    "node_modules",
+    ".git",
+    "vendor",
+    "dist",
+    "build",
+    "bin",
+    "obj",
+    ".venv",
+    "venv",
+    "__pycache__"
+  ],
+  "exclude_patterns": [],
+  "output_dir": ".test-theater/reports",
+  "languages": [
+    "python",
+    "javascript",
+    "typescript",
+    "csharp",
+    "powershell"
+  ]
+}

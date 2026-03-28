@@ -1,0 +1,21 @@
+installed:
+  - verify
+  - cleanup
+settings:
+  auto_execute_hooks: true
+hooks:
+  after_implement:
+  - extension: verify
+    command: speckit.verify
+    enabled: true
+    optional: true
+    prompt: Run verify to check implementation against spec?
+    description: Post-implementation spec compliance verification
+    condition: null
+  - extension: cleanup
+    command: speckit.cleanup.run
+    enabled: true
+    optional: true
+    prompt: Run cleanup to review implementation changes and identify tech debt?
+    description: Post-implementation quality gate
+    condition: null

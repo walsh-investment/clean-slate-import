@@ -1,0 +1,30 @@
+{
+  "name": "Verify Extension",
+  "id": "verify",
+  "description": "Post-implementation spec compliance verification. Runs upstream spec-kit-verify against feature artifacts, produces structured findings grouped by severity and category, and appends deduplicated follow-up tasks to tasks.md.",
+  "author": "ismaelJimenez",
+  "version": "1.0.0",
+  "download_url": "https://github.com/ismaelJimenez/spec-kit-verify/archive/refs/tags/v1.0.0.zip",
+  "repository": "https://github.com/ismaelJimenez/spec-kit-verify",
+  "license": "MIT",
+  "requires": {
+    "speckit_version": ">=0.1.0"
+  },
+  "provides": {
+    "commands": 1,
+    "hooks": 1
+  },
+  "tags": [
+    "quality",
+    "verification",
+    "compliance",
+    "post-implementation"
+  ],
+  "verified": false,
+  "created_at": "2026-03-08T00:00:00Z",
+  "updated_at": "2026-03-08T00:00:00Z",
+  "statistics": {
+    "downloads": 0,
+    "stars": 0
+  }
+}

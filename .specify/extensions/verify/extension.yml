@@ -1,0 +1,38 @@
+schema_version: "1.0"
+
+extension:
+  id: "verify"
+  name: "Verify Extension"
+  version: "1.0.0"
+  description: "Post-implementation spec compliance verification. Runs upstream spec-kit-verify against feature artifacts, produces structured findings grouped by severity and category, and appends deduplicated follow-up tasks to tasks.md."
+  author: "ismaelJimenez"
+  repository: "https://github.com/ismaelJimenez/spec-kit-verify"
+  license: "MIT"
+  homepage: "https://github.com/ismaelJimenez/spec-kit-verify"
+
+requires:
+  speckit_version: ">=0.1.0"
+
+  commands:
+    - "speckit.implement"
+    - "speckit.tasks"
+
+provides:
+  commands:
+    - name: "speckit.verify"
+      file: "commands/verify.md"
+      description: "Run post-implementation verification against spec artifacts and generate follow-up tasks"
+      aliases: []
+
+hooks:
+  after_implement:
+    command: "speckit.verify"
+    optional: true
+    prompt: "Run verify to check implementation against spec?"
+    description: "Post-implementation spec compliance verification"
+
+tags:
+  - "quality"
+  - "verification"
+  - "compliance"
+  - "post-implementation"
