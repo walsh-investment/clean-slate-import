@@ -59,6 +59,21 @@ Header gotcha: headers containing `,` `.` `[` `]` `#` `'` `@` make structured re
 
 Table naming — prefer `tblTransactions`, `tblRentRoll`, `tblUnitInventory`. Avoid generic names like `Table1` or names that look like cell references.
 
+## Table as Single Source of Truth
+
+When a master table exists (e.g., a config table holding entity names, IDs, rates, or dates), every downstream sheet that needs that data should **reference the table via structured references or lookups** — not re-materialize the same columns as independent literals from the build script.
+
+**Why this matters**: Tables auto-expand, support structured references, and give auditors a single traceable source. Hardcoding the same values onto multiple sheets defeats all three benefits — the data looks tabular but the linkage is an illusion.
+
+**Pattern — key-column + lookup**:
+- The master table owns the full record (all columns)
+- Each downstream table or range gets only a **key column** as a hardcoded value
+- All other columns use `=XLOOKUP([@Key], tblMaster[Key], tblMaster[TargetCol])` or `=INDEX(tblMaster[TargetCol], MATCH([@Key], tblMaster[Key], 0))`
+
+**When building via Python**: Write the key as a literal, write everything else as a formula string. If a downstream sheet's partner-name column is `=XLOOKUP(...)` instead of `p.name`, the workbook is self-documenting and any manual edit to the master table propagates automatically.
+
+**Edge case — performance**: For workbooks with 10,000+ lookup rows, consider caching via a helper sheet with `INDEX/MATCH` rather than per-cell `XLOOKUP`. The DRY principle still holds — the helper sheet is formula-linked, not a second literal copy.
+
 ## High-Value Gotchas
 
 1. **Spill formulas and tables do not mix.** Never put `FILTER()`, `SORT()`, `UNIQUE()`, or `SEQUENCE()` inside a table body. Place the spill formula outside; let it feed from the table.

@@ -1,6 +1,7 @@
 ---
 name: xlsx
 description: "Use this skill any time a spreadsheet file is the primary input or output. Triggers when the user wants to open, read, edit, fix, or create an .xlsx, .xlsm, .csv, or .tsv file. Also triggers for cleaning messy tabular data, converting between tabular formats, or restructuring malformed rows and headers. Trigger especially when a spreadsheet file is referenced by name or path. Do NOT trigger when the deliverable is a Word document, HTML report, Python script, database pipeline, or Google Sheets integration."
+description: "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); create a new spreadsheet from scratch or from other data sources; or convert between tabular file formats. Trigger especially when the user references a spreadsheet file by name or path — even casually (like 'the xlsx in my downloads') — and wants something done to it or produced from it. Also trigger for cleaning or restructuring messy tabular data files (malformed rows, misplaced headers, junk data) into proper spreadsheets. The deliverable must be a spreadsheet file. Do NOT trigger when the primary deliverable is a Word document, HTML report, standalone Python script, database pipeline, or Google Sheets API integration, even if tabular data is involved."
 ---
 
 # Requirements for Outputs
@@ -64,14 +65,18 @@ Unless otherwise stated by the user or existing template
 
 # XLSX creation, editing, and analysis
 
+<<<<<<< HEAD
 ## Companion Skill — Excel Tables and Structured References
 
 When the workbook involves **native Excel tables**, **structured-reference formulas**, or deciding whether a range should be a table vs. named range vs. plain range, also load the **`creating-excel-tables`** skill (`skills/common/creating-excel-tables.md`). It covers table candidacy heuristics, library selection for `ListObject` creation (xlwings / COM / openpyxl / XlsxWriter), structured-reference syntax, spill-formula placement, and per-library implementation patterns.
 
+=======
+>>>>>>> 001-workflow-brainstorm
 ## Overview
 
 A user may ask you to create, edit, or analyze the contents of an .xlsx file. You have different tools and workflows available for different tasks.
 
+<<<<<<< HEAD
 ## Required Tools
 
 This skill requires the following tools at runtime:
@@ -81,6 +86,8 @@ This skill requires the following tools at runtime:
 
 **Before starting**: Verify that pandas and openpyxl are installed. If `scripts/recalc.py` is needed (formula recalculation), verify LibreOffice is available. If a required tool is missing, STOP and inform the user which workflow cannot proceed.
 
+=======
+>>>>>>> 001-workflow-brainstorm
 ## Important Requirements
 
 **LibreOffice Required for Formula Recalculation**: You can assume LibreOffice is installed for recalculating formula values using the `scripts/recalc.py` script. The script automatically configures LibreOffice on first run, including in sandboxed environments where Unix sockets are restricted (handled by `scripts/office/soffice.py`)
@@ -106,6 +113,11 @@ df.describe()  # Statistics
 df.to_excel('output.xlsx', index=False)
 ```
 
+<<<<<<< HEAD
+=======
+## Excel File Workflows
+
+>>>>>>> 001-workflow-brainstorm
 ## CRITICAL: Use Formulas, Not Hardcoded Values
 
 **Always use Excel formulas instead of calculating values in Python and hardcoding them.** This ensures the spreadsheet remains dynamic and updateable.
@@ -299,4 +311,8 @@ The script returns JSON with error details:
 **For Excel files themselves**:
 - Add comments to cells with complex formulas or important assumptions
 - Document data sources for hardcoded values
+<<<<<<< HEAD
 - Include notes for key calculations and model sections
+=======
+- Include notes for key calculations and model sections
+>>>>>>> 001-workflow-brainstorm

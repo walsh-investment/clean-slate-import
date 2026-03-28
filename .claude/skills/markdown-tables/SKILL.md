@@ -1,6 +1,7 @@
 ---
 name: markdown-tables
 description: "Use whenever creating or editing a markdown (.md) file that contains or will contain a table. This includes generating new markdown files, adding tables to existing files, or editing existing tables. This skill activates automatically — the user does not need to ask for readable tables."
+description: "Apply whenever creating or editing a markdown (.md) file that contains or will contain a table. This includes generating new markdown files, adding tables to existing files, or editing existing tables. This skill activates automatically — the user does not need to ask for readable tables."
 ---
 
 # Markdown Table Formatting
@@ -129,4 +130,8 @@ If you encounter an existing table that violates these rules and you are editing
 
 - **Code blocks**: Tables inside fenced code blocks (` ``` `) are exempt — they may be showing examples of raw syntax.
 - **Single-column tables**: Trivial tables with one column don't need alignment.
+<<<<<<< HEAD
 - **Tables the user explicitly wants compact**: If the user asks for minimal/compact table syntax, respect that.
+=======
+- **Tables the user explicitly wants compact**: If the user asks for minimal/compact table syntax, respect that.
+>>>>>>> 001-workflow-brainstorm

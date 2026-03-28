@@ -4,26 +4,31 @@
 param(
     [switch]$Json,
     [string]$ShortName,
+    [Parameter()]
     [int]$Number = 0,
+    [Parameter()]
+    [int]$Category = 0,
     [switch]$Help,
-    [Parameter(ValueFromRemainingArguments = $true)]
+    [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
     [string[]]$FeatureDescription
 )
 $ErrorActionPreference = 'Stop'
 
 # Show help if requested
 if ($Help) {
-    Write-Host "Usage: ./create-new-feature.ps1 [-Json] [-ShortName <name>] [-Number N] <feature description>"
+    Write-Host "Usage: ./create-new-feature.ps1 [-Json] [-ShortName <name>] [-Number N] [-Category N] <feature description>"
     Write-Host ""
     Write-Host "Options:"
     Write-Host "  -Json               Output in JSON format"
     Write-Host "  -ShortName <name>   Provide a custom short name (2-4 words) for the branch"
     Write-Host "  -Number N           Specify branch number manually (overrides auto-detection)"
+    Write-Host "  -Category N         Specify category number (e.g. 4 for Agent Skills Management)"
     Write-Host "  -Help               Show this help message"
     Write-Host ""
     Write-Host "Examples:"
     Write-Host "  ./create-new-feature.ps1 'Add user authentication system' -ShortName 'user-auth'"
     Write-Host "  ./create-new-feature.ps1 'Implement OAuth2 integration for API'"
+    Write-Host "  ./create-new-feature.ps1 'Add accounting skill' -Category 4 -ShortName 'accounting-skill'"
     exit 0
 }
 
@@ -59,15 +64,64 @@ function Find-RepositoryRoot {
     }
 }
 
+function Get-CategoryConfig {
+    param([string]$RepoRoot)
+    $configPath = Join-Path $RepoRoot '.specify/config/categories.json'
+    if (-not (Test-Path $configPath)) { return $null }
+    try {
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+    } catch {
+        Write-Warning "[specify] categories.json is malformed and will be ignored: $_"
+        return $null
+    }
+
+    # Schema validation
+    if ($null -eq $config.categories -or
+        ($config.categories.PSObject.Properties | Measure-Object).Count -eq 0) {
+        Write-Error "[specify] categories.json 'categories' map must contain at least one entry"
+        exit 1
+    }
+    foreach ($prop in $config.categories.PSObject.Properties) {
+        $parsedInt = 0
+        if (-not [int]::TryParse($prop.Name, [ref]$parsedInt) -or $parsedInt -le 0) {
+            Write-Error "[specify] categories.json has invalid category key '$($prop.Name)': all keys must be positive integers"
+            exit 1
+        }
+    }
+    if ($null -eq $config.default_category) {
+        Write-Error "[specify] categories.json 'default_category' is required but missing"
+        exit 1
+    }
+    $defaultKey = [string]([int]$config.default_category)
+    if (-not $config.categories.PSObject.Properties[$defaultKey]) {
+        Write-Error "[specify] categories.json 'default_category' ($($config.default_category)) is not defined in 'categories'"
+        exit 1
+    }
+
+    return $config
+}
+
 function Get-HighestNumberFromSpecs {
-    param([string]$SpecsDir)
+    param(
+        [string]$SpecsDir,
+        [string]$CategoryPrefix = ''
+    )
     
     $highest = 0
     if (Test-Path $SpecsDir) {
         Get-ChildItem -Path $SpecsDir -Directory | ForEach-Object {
-            if ($_.Name -match '^(\d+)') {
-                $num = [int]$matches[1]
-                if ($num -gt $highest) { $highest = $num }
+            if ($CategoryPrefix) {
+                # Category-scoped: match "{prefix}{seq...}-" and extract sequence only
+                if ($_.Name -match "^$CategoryPrefix(\d+)-") {
+                    $seq = [int]$matches[1]
+                    if ($seq -gt $highest) { $highest = $seq }
+                }
+            } else {
+                # Global: match any leading digits
+                if ($_.Name -match '^(\d+)') {
+                    $num = [int]$matches[1]
+                    if ($num -gt $highest) { $highest = $num }
+                }
             }
         }
     }
@@ -75,7 +129,9 @@ function Get-HighestNumberFromSpecs {
 }
 
 function Get-HighestNumberFromBranches {
-    param()
+    param(
+        [string]$CategoryPrefix = ''
+    )
     
     $highest = 0
     try {
@@ -85,10 +141,18 @@ function Get-HighestNumberFromBranches {
                 # Clean branch name: remove leading markers and remote prefixes
                 $cleanBranch = $branch.Trim() -replace '^\*?\s+', '' -replace '^remotes/[^/]+/', ''
                 
-                # Extract feature number if branch matches pattern ###-*
-                if ($cleanBranch -match '^(\d+)-') {
-                    $num = [int]$matches[1]
-                    if ($num -gt $highest) { $highest = $num }
+                if ($CategoryPrefix) {
+                    # Category-scoped: match "{prefix}{seq...}-" and extract sequence only
+                    if ($cleanBranch -match "^$CategoryPrefix(\d+)-") {
+                        $seq = [int]$matches[1]
+                        if ($seq -gt $highest) { $highest = $seq }
+                    }
+                } else {
+                    # Global: match any leading digits
+                    if ($cleanBranch -match '^(\d+)-') {
+                        $num = [int]$matches[1]
+                        if ($num -gt $highest) { $highest = $num }
+                    }
                 }
             }
         }
@@ -101,7 +165,8 @@ function Get-HighestNumberFromBranches {
 
 function Get-NextBranchNumber {
     param(
-        [string]$SpecsDir
+        [string]$SpecsDir,
+        [int]$Category = 0
     )
 
     # Fetch all remotes to get latest branch info (suppress errors if no remotes)
@@ -111,17 +176,20 @@ function Get-NextBranchNumber {
         # Ignore fetch errors
     }
 
-    # Get highest number from ALL branches (not just matching short name)
-    $highestBranch = Get-HighestNumberFromBranches
-
-    # Get highest number from ALL specs (not just matching short name)
-    $highestSpec = Get-HighestNumberFromSpecs -SpecsDir $SpecsDir
-
-    # Take the maximum of both
-    $maxNum = [Math]::Max($highestBranch, $highestSpec)
-
-    # Return next number
-    return $maxNum + 1
+    if ($Category -gt 0) {
+        $categoryPrefix = [string]$Category
+        $highestBranch = Get-HighestNumberFromBranches -CategoryPrefix $categoryPrefix
+        $highestSpec   = Get-HighestNumberFromSpecs -SpecsDir $SpecsDir -CategoryPrefix $categoryPrefix
+        $maxSeq = [Math]::Max($highestBranch, $highestSpec)
+        $nextSeq = '{0:02}' -f ($maxSeq + 1)
+        return [int]"$categoryPrefix$nextSeq"
+    } else {
+        # Legacy global numbering (no category)
+        $highestBranch = Get-HighestNumberFromBranches
+        $highestSpec   = Get-HighestNumberFromSpecs -SpecsDir $SpecsDir
+        $maxNum = [Math]::Max($highestBranch, $highestSpec)
+        return $maxNum + 1
+    }
 }
 
 function ConvertTo-CleanBranchName {
@@ -151,6 +219,42 @@ Set-Location $repoRoot
 
 $specsDir = Join-Path $repoRoot 'specs'
 New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
+
+# T009: Resolve the effective category for this spec
+$config = Get-CategoryConfig -RepoRoot $repoRoot
+$effectiveCategory = 0
+if ($Category -gt 0) {
+    # User specified a category — validate it exists in config
+    if ($null -eq $config) {
+        $configPath = Join-Path $repoRoot '.specify/config/categories.json'
+        if (Test-Path $configPath) {
+            Write-Error "[specify] -Category $Category specified but .specify/config/categories.json is malformed or unreadable"
+        } else {
+            Write-Error "[specify] -Category $Category specified but no .specify/config/categories.json found in repo root"
+        }
+        exit 1
+    }
+    $categoryKey = [string]$Category
+    if (-not $config.categories.PSObject.Properties[$categoryKey]) {
+        $validList = ($config.categories.PSObject.Properties | ForEach-Object { "$($_.Name): $($_.Value)" }) -join ', '
+        Write-Error "[specify] Category $Category is not defined in .specify/config/categories.json. Valid categories: $validList"
+        exit 1
+    }
+    $effectiveCategory = $Category
+} else {
+    # No category specified — use default from config or fall back to 8
+    if ($null -ne $config) {
+        $effectiveCategory = [int]$config.default_category
+    } else {
+        $configPath = Join-Path $repoRoot '.specify/config/categories.json'
+        if (Test-Path $configPath) {
+            Write-Warning "[specify] .specify/config/categories.json is malformed or unreadable; defaulting to category 8 (Uncategorized)"
+        } else {
+            Write-Warning "[specify] No .specify/config/categories.json found; defaulting to category 8 (Uncategorized)"
+        }
+        $effectiveCategory = 8
+    }
+}
 
 # Function to generate branch name with stop word filtering and length filtering
 function Get-BranchName {
@@ -207,17 +311,26 @@ if ($ShortName) {
 }
 
 # Determine branch number
-if ($Number -eq 0) {
-    if ($hasGit) {
-        # Check existing branches on remotes
-        $Number = Get-NextBranchNumber -SpecsDir $specsDir
-    } else {
-        # Fall back to local directory check
-        $Number = (Get-HighestNumberFromSpecs -SpecsDir $specsDir) + 1
+# VF-002: Warn if both -Number and -Category were explicitly specified and they disagree
+if ($Number -gt 0 -and $Category -gt 0) {
+    if (-not ([string]$Number).StartsWith([string]$Category)) {
+        Write-Warning "[specify] -Number $Number does not begin with category prefix '$Category'. The branch will be named '$Number-...' rather than '$Category##-...'. Pass only -Category to let the script compute the correct category-scoped number."
     }
 }
 
-$featureNum = ('{0:000}' -f $Number)
+if ($Number -eq 0) {
+    if ($hasGit) {
+        # Check existing branches on remotes
+        $Number = Get-NextBranchNumber -SpecsDir $specsDir -Category $effectiveCategory
+    } else {
+        # Fall back to local directory check
+        $categoryPrefix = [string]$effectiveCategory
+        $highestSeq = Get-HighestNumberFromSpecs -SpecsDir $specsDir -CategoryPrefix $categoryPrefix
+        $Number = [int]"$categoryPrefix$('{0:02}' -f ($highestSeq + 1))"
+    }
+}
+
+$featureNum = [string]$Number
 $branchName = "$featureNum-$branchSuffix"
 
 # GitHub enforces a 244-byte limit on branch names
@@ -225,8 +338,8 @@ $branchName = "$featureNum-$branchSuffix"
 $maxBranchLength = 244
 if ($branchName.Length -gt $maxBranchLength) {
     # Calculate how much we need to trim from suffix
-    # Account for: feature number (3) + hyphen (1) = 4 chars
-    $maxSuffixLength = $maxBranchLength - 4
+    # Account for: feature number length + hyphen separator
+    $maxSuffixLength = $maxBranchLength - ($featureNum.Length + 1)
     
     # Truncate suffix
     $truncatedSuffix = $branchSuffix.Substring(0, [Math]::Min($branchSuffix.Length, $maxSuffixLength))
@@ -282,4 +395,5 @@ if ($Json) {
     Write-Output "HAS_GIT: $hasGit"
     Write-Output "SPECIFY_FEATURE environment variable set to: $branchName"
 }
+
 

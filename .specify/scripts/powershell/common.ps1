@@ -40,7 +40,7 @@ function Get-CurrentBranch {
         $highest = 0
         
         Get-ChildItem -Path $specsDir -Directory | ForEach-Object {
-            if ($_.Name -match '^(\d{3})-') {
+            if ($_.Name -match '^(\d{3,})-') {
                 $num = [int]$matches[1]
                 if ($num -gt $highest) {
                     $highest = $num
@@ -79,9 +79,9 @@ function Test-FeatureBranch {
         return $true
     }
     
-    if ($Branch -notmatch '^[0-9]{3}-') {
+    if ($Branch -notmatch '^[0-9]{3,}-') {
         Write-Output "ERROR: Not on a feature branch. Current branch: $Branch"
-        Write-Output "Feature branches should be named like: 001-feature-name"
+        Write-Output "Feature branches should be named like: 001-feature-name or 401-feature-name"
         return $false
     }
     return $true
@@ -134,4 +134,5 @@ function Test-DirHasFiles {
         return $false
     }
 }
+
 

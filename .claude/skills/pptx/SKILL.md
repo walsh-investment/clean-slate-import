@@ -1,6 +1,7 @@
 ---
 name: pptx
 description: "Use this skill any time a .pptx file is involved — as input, output, or both. This includes: creating or editing slide decks, pitch decks, or presentations; reading or extracting text from .pptx files; working with templates, layouts, speaker notes, or comments. Trigger whenever the user mentions \"deck,\" \"slides,\" \"presentation,\" or references a .pptx filename. If a .pptx file needs to be opened, created, or touched, use this skill."
+description: "Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files; working with templates, layouts, speaker notes, or comments. Trigger whenever the user mentions \"deck,\" \"slides,\" \"presentation,\" or references a .pptx filename, regardless of what they plan to do with the content afterward. If a .pptx file needs to be opened, created, or touched, use this skill."
 ---
 
 # PPTX Skill
@@ -649,4 +650,8 @@ pdftoppm -jpeg -r 150 -f N -l N output.pdf slide-fixed
 - `pip install Pillow` - thumbnail grids
 - `npm install -g pptxgenjs` - creating from scratch
 - LibreOffice (`soffice`) - PDF conversion (auto-configured for sandboxed environments via `scripts/office/soffice.py`)
+<<<<<<< HEAD
 - Poppler (`pdftoppm`) - PDF to images
+=======
+- Poppler (`pdftoppm`) - PDF to images
+>>>>>>> 001-workflow-brainstorm

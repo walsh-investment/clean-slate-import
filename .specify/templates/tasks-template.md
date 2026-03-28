@@ -11,7 +11,7 @@ description: "Task list template for feature implementation"
   See specs/NNN-feature/spec.md for user stories and priorities.
 -->
 
-**Input**: Design documents from `/specs/[###-feature-name]/`
+**Input**: Design documents from `/specs/[NNN-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
 <!-- REPO CONTEXT START -->
@@ -259,3 +259,4 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+

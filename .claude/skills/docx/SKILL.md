@@ -1,6 +1,7 @@
 ---
 name: docx
 description: "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers: any mention of 'Word doc', '.docx', or requests for reports, memos, letters, or professional documents with headings, tables of contents, or page numbers. Also triggers for find-and-replace, tracked changes, image insertion, or extracting content from .docx files. Do NOT use for PDFs, spreadsheets, or Google Docs."
+description: "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers include: any mention of 'Word doc', 'word document', '.docx', or requests to produce professional documents with formatting like tables of contents, headings, page numbers, or letterheads. Also use when extracting or reorganizing content from .docx files, inserting or replacing images in documents, performing find-and-replace in Word files, working with tracked changes or comments, or converting content into a polished Word document. If the user asks for a 'report', 'memo', 'letter', 'template', or similar deliverable as a Word or .docx file, use this skill. Do NOT use for PDFs, spreadsheets, Google Docs, or general coding tasks unrelated to document generation."
 ---
 
 # DOCX creation, editing, and analysis
@@ -687,4 +688,8 @@ After running `comment.py` (see Step 2), add markers to document.xml. For replie
 - **pandoc**: Text extraction
 - **docx**: `npm install -g docx` (new documents)
 - **LibreOffice**: PDF conversion (auto-configured for sandboxed environments via `scripts/office/soffice.py`)
+<<<<<<< HEAD
 - **Poppler**: `pdftoppm` for images
+=======
+- **Poppler**: `pdftoppm` for images
+>>>>>>> 001-workflow-brainstorm

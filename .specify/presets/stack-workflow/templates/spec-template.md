@@ -11,7 +11,7 @@
 <!-- Add repo-specific context paths here. Content inside these markers is preserved during speckit updates. -->
 <!-- REPO CONTEXT END -->
 
-**Feature Branch**: `[###-feature-name]`  
+**Feature Branch**: `[NNN-feature-name]`  
 **Created**: [DATE]  
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"

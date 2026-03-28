@@ -568,6 +568,14 @@ function Install-BootstrapSpeckit {
 <!-- Add project roadmap here -->
 <!-- REPO CONTEXT END -->
 "@
+        '.specify/config/categories.json' = @"
+{
+  "categories": {
+    "8": "Uncategorized"
+  },
+  "default_category": 8
+}
+"@
     }
 
     foreach ($entry in $placeholders.GetEnumerator()) {
@@ -2078,3 +2086,4 @@ $rolloutSummary = [PSCustomObject]@{
 Write-Output ""
 Write-Output "=== Per-Repo Rollout Summary ==="
 $rolloutSummary | ConvertTo-Json -Depth 3
+

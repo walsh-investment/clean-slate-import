@@ -115,7 +115,7 @@ OTHERWISE  →  basic test-plan.md without risk analysis section
 ```markdown
 # Test Plan: [FEATURE NAME]
 
-**Feature**: [###-feature-name]
+**Feature**: [NNN-feature-name]
 **Date**: [DATE]
 **Source**: spec.md acceptance scenarios + scenario matrices
 

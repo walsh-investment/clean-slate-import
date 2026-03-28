@@ -20,6 +20,14 @@ This skill requires the following tools at runtime:
 
 **Before starting**: Verify that required libraries are installed for the specific operations needed. If a tool is unavailable, STOP and inform the user which operations cannot proceed. Do NOT silently fall back to incorrect methods (e.g., using pypdf text extraction on a scanned PDF with no text layer).
 
+## Evaluating a PDF Deliverable — Required Reading
+
+Whenever a PDF is being **evaluated, reviewed, judged, graded, tested, or compared** (not just created or manipulated), you **MUST** first read:
+
+> `c:\Repos\SXS\.claude\skills\pdf\pdf-evaluation-blind-spots.md`
+
+Programmatic PDF analysis has critical limitations that cause **silent, incorrect conclusions** — scanned image-only PDFs returning empty text, form field values invisible to `extract_text()`, font encoding failures producing garbage characters, multi-column layouts with interleaved reading order, hidden annotation layers, cosmetic redactions exposing underlying text, and more. This reference documents every known blind spot and the workaround for each. Do NOT evaluate a PDF deliverable without reading it first.
+
 ## Quick Start
 
 ```python
