@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Skills fleet — managed via junction to Stack/.agents/skills/
+.claude/skills/
+.agents/skills/
